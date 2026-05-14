@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tower Remake - Pinch Zoom & Jump</title>
+    <title>Tower Remake - Complete & Fixed Controls</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; user-select: none; touch-action: none; }
         #overlay {
@@ -34,6 +34,7 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
         #jump-button {
             position: absolute; bottom: 50px; right: 50px;
@@ -96,13 +97,17 @@
         
         let charGroup, charMaterials = [], collisionObjs = [], ladderObjs = []; 
         let charHead, pL_Arm, pR_Arm, pL_Leg, pR_Leg;
+        let orbitPivot; // For rotating platform
         
         const floorRay = new THREE.Raycaster();
-        const ceilingRay = new THREE.Raycaster();
         const cameraRay = new THREE.Raycaster();
         const ladderRay = new THREE.Raycaster();
 
+        // Independent Touch Tracking State
+        let activeLookTouchId = null;
+        let activeJoystickTouchId = null;
         let joystickVector = new THREE.Vector2(0, 0);
+        let touchStartX, touchStartY;
         let lastPinchDist = -1;
 
         function init() {
@@ -125,9 +130,6 @@
             setupMobileControls();
             
             document.getElementById('start-btn').addEventListener('click', () => {
-                if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    renderer.domElement.requestPointerLock();
-                }
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('mobile-controls').style.display = 'block';
                 isRunning = true;
@@ -139,13 +141,7 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
-            document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement !== renderer.domElement && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    document.getElementById('overlay').style.display = 'flex';
-                    isRunning = false;
-                }
-            });
-
+            // Keyboard support
             window.addEventListener('keydown', (e) => { 
                 const key = e.key.toLowerCase();
                 if(key in moveKeys) moveKeys[key] = true; 
@@ -157,51 +153,54 @@
                 if(e.code==='Space') moveKeys.space=false; 
             });
 
-            document.addEventListener('mousemove', (e) => { 
-                if(document.pointerLockElement){ 
-                    camYaw -= e.movementX * 0.003; 
-                    camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * 0.003, -1.5, 1.5);
-                } 
-            });
+            // --- IMPROVED MULTI-TOUCH LOGIC ---
+            const joystickCont = document.getElementById('joystick-container');
+            const jumpBtn = document.getElementById('jump-button');
 
-            // --- MOBILE MULTI-TOUCH (LOOK & PINCH) ---
-            let touchStartX, touchStartY;
             document.addEventListener('touchstart', (e) => {
-                if (e.target.id === 'joystick-container' || e.target.id === 'jump-button' || e.target.id === 'joystick-knob') return;
-                
-                if (e.touches.length === 1) {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                } else if (e.touches.length === 2) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const isJoystick = joystickCont.contains(touch.target);
+                    const isJump = jumpBtn.contains(touch.target);
+                    
+                    if (!isJoystick && !isJump && activeLookTouchId === null) {
+                        activeLookTouchId = touch.identifier;
+                        touchStartX = touch.clientX;
+                        touchStartY = touch.clientY;
+                    }
+                }
+                if (e.touches.length >= 2) {
                     lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 }
             }, { passive: false });
 
             document.addEventListener('touchmove', (e) => {
-                if (e.target.id === 'joystick-container' || e.target.id === 'jump-button' || e.target.id === 'joystick-knob') return;
-
-                if (e.touches.length === 1) {
-                    const touchX = e.touches[0].clientX;
-                    const touchY = e.touches[0].clientY;
-                    camYaw -= (touchX - touchStartX) * 0.005;
-                    camPitch = THREE.MathUtils.clamp(camPitch + (touchY - touchStartY) * 0.005, -1.5, 1.5);
-                    touchStartX = touchX;
-                    touchStartY = touchY;
-                } else if (e.touches.length === 2) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === activeLookTouchId) {
+                        camYaw -= (touch.clientX - touchStartX) * 0.005;
+                        camPitch = THREE.MathUtils.clamp(camPitch + (touch.clientY - touchStartY) * 0.005, -1.5, 1.5);
+                        touchStartX = touch.clientX;
+                        touchStartY = touch.clientY;
+                    }
+                }
+                // Pinch zoom while moving
+                if (e.touches.length >= 2) {
                     const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                     if (lastPinchDist > 0) {
                         const delta = lastPinchDist - dist;
-                        camDist = THREE.MathUtils.clamp(camDist + delta * 0.1, 0.1, 80);
+                        camDist = THREE.MathUtils.clamp(camDist + delta * 0.15, 0.1, 80);
                     }
                     lastPinchDist = dist;
                 }
             }, { passive: false });
 
-            document.addEventListener('touchend', () => { lastPinchDist = -1; });
-
-            window.addEventListener('wheel', (e) => {
-                if(isRunning) camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.05, 0.1, 80);
-            }, { passive: true });
+            document.addEventListener('touchend', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeLookTouchId) activeLookTouchId = null;
+                }
+                if (e.touches.length < 2) lastPinchDist = -1;
+            });
 
             clock = new THREE.Clock();
             loop();
@@ -212,38 +211,49 @@
             const knob = document.getElementById('joystick-knob');
             const jumpBtn = document.getElementById('jump-button');
 
-            const handleJoystick = (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
+            const handleJoystickMove = (touch) => {
                 const rect = joystick.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 const maxLen = rect.width / 2;
-
                 let dx = touch.clientX - centerX;
                 let dy = touch.clientY - centerY;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-
-                if (dist > maxLen) {
-                    dx *= maxLen / dist;
-                    dy *= maxLen / dist;
-                }
-
+                if (dist > maxLen) { dx *= maxLen / dist; dy *= maxLen / dist; }
                 knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
                 joystickVector.set(dx / maxLen, dy / maxLen);
             };
 
-            joystick.addEventListener('touchstart', handleJoystick);
-            joystick.addEventListener('touchmove', handleJoystick);
-            joystick.addEventListener('touchend', () => {
-                knob.style.transform = `translate(-50%, -50%)`;
-                joystickVector.set(0, 0);
+            joystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                activeJoystickTouchId = e.changedTouches[0].identifier;
+                handleJoystickMove(e.changedTouches[0]);
+            });
+
+            joystick.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeJoystickTouchId) {
+                        handleJoystickMove(e.changedTouches[i]);
+                    }
+                }
+            });
+
+            joystick.addEventListener('touchend', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeJoystickTouchId) {
+                        activeJoystickTouchId = null;
+                        knob.style.transform = `translate(-50%, -50%)`;
+                        joystickVector.set(0, 0);
+                    }
+                }
             });
 
             jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveKeys.space = true; });
             jumpBtn.addEventListener('touchend', () => { moveKeys.space = false; });
         }
 
+        // --- FULL RESTORATION OF ASSETS ---
         function createBevelPart(w, h, d, color) {
             const b = 0.06;
             const s = new THREE.Shape();
@@ -293,7 +303,7 @@
             canvas.width = 512; canvas.height = 128;
             ctx.fillStyle = 'rgba(0,0,0,0)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'bold 70px "Zekton", "Segoe UI", Roboto, sans-serif';
+            ctx.font = 'bold 70px "Segoe UI", sans-serif';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#555555'; 
             ctx.fillText(text, 256, 80);
@@ -322,6 +332,7 @@
             floorMesh.rotation.x = -Math.PI / 2; floorMesh.rotation.z = (9 * Math.PI) / 180; 
             scene.add(floorMesh); collisionObjs.push(floorMesh);
 
+            // BLUE PLUS SIGN FLOOR
             const pSize = 36, aWidth = 12, outerRad = 7.8, innerRad = 15.0;
             const rotOffset = -27 * (Math.PI / 180); 
             const ps = new THREE.Shape();
@@ -338,7 +349,8 @@
             plusMesh.rotation.x = -Math.PI/2; plusMesh.rotation.z = ((9 * Math.PI) / 180) + rotOffset;
             plusMesh.position.y = 0.01; scene.add(plusMesh);
 
-            const orbitPivot = new THREE.Group();
+            // ORBITING PLATFORM
+            orbitPivot = new THREE.Group();
             scene.add(orbitPivot);
             const circleMesh = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 1, 64), new THREE.MeshPhongMaterial({ color: THEME.glowOrange, emissive: THEME.glowOrange, emissiveIntensity: 1 }));
             circleMesh.position.set(21, 0.5, 21); 
@@ -346,33 +358,16 @@
             orbitPivot.rotation.y = -rotOffset;
             collisionObjs.push(circleMesh);
 
+            // Gate
             const gateGroup = new THREE.Group();
             const gateShape = new THREE.Shape();
-            gateShape.moveTo(-3.5, 0); gateShape.lineTo(-3.5, 8); 
-            gateShape.quadraticCurveTo(-3.5, 10, 0, 10); 
-            gateShape.quadraticCurveTo(3.5, 10, 3.5, 8);
-            gateShape.lineTo(3.5, 0);
-            gateShape.lineTo(2.5, 0); gateShape.lineTo(2.5, 8); 
-            gateShape.quadraticCurveTo(2.5, 9, 0, 9);
-            gateShape.quadraticCurveTo(-2.5, 9, -2.5, 8);
-            gateShape.lineTo(-2.5, 0); 
-            gateShape.lineTo(-3.5, 0);
-
-            const gateMesh = new THREE.Mesh(
-                new THREE.ExtrudeGeometry(gateShape, { depth: 0.5, bevelEnabled: false }),
-                new THREE.MeshPhongMaterial({ color: THEME.gray })
-            );
-            gateMesh.position.set(0, 0, -APOTHEM); 
-            gateGroup.add(gateMesh);
-            collisionObjs.push(gateMesh);
-
+            gateShape.moveTo(-3.5, 0); gateShape.lineTo(-3.5, 8); gateShape.quadraticCurveTo(-3.5, 10, 0, 10); gateShape.quadraticCurveTo(3.5, 10, 3.5, 8); gateShape.lineTo(3.5, 0); gateShape.lineTo(2.5, 0); gateShape.lineTo(2.5, 8); gateShape.quadraticCurveTo(2.5, 9, 0, 9); gateShape.quadraticCurveTo(-2.5, 9, -2.5, 8); gateShape.lineTo(-2.5, 0); gateShape.lineTo(-3.5, 0);
+            const gateMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(gateShape, { depth: 0.5, bevelEnabled: false }), new THREE.MeshPhongMaterial({ color: THEME.gray }));
+            gateMesh.position.set(0, 0, -APOTHEM); gateGroup.add(gateMesh); collisionObjs.push(gateMesh);
             const textSpriteMat = new THREE.MeshBasicMaterial({ map: createTextTexture("PRO TOWERS"), transparent: true });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), textSpriteMat);
-            textPlane.position.set(0, 11.2, -APOTHEM + 0.51); 
-            gateGroup.add(textPlane);
-
-            gateGroup.rotation.y = (17 * (Math.PI * 2 / NUM_SIDES));
-            scene.add(gateGroup);
+            textPlane.position.set(0, 11.2, -APOTHEM + 0.51); gateGroup.add(textPlane);
+            gateGroup.rotation.y = (17 * (Math.PI * 2 / NUM_SIDES)); scene.add(gateGroup);
 
             for(let i=0; i<19; i++) {
                 const stepGroup = new THREE.Group();
@@ -382,9 +377,7 @@
                 const r = APOTHEM - (STEP_DEPTH / 4);
                 stepGroup.position.set(Math.cos(angle)*r, i * 1.0 + ((i === 18) ? 0.25 : 0.5), Math.sin(angle)*r);
                 stepGroup.rotation.y = -angle;
-                stepGroup.add(step);
-                scene.add(stepGroup); 
-                collisionObjs.push(step);
+                stepGroup.add(step); scene.add(stepGroup); collisionObjs.push(step);
                 if (i === 18) {
                     for (let j = 1; j <= 9; j++) {
                         const rung = new THREE.Mesh(new THREE.BoxGeometry(STEP_WIDTH, 1, 1), new THREE.MeshPhongMaterial({ color: THEME.gray }));
@@ -414,7 +407,6 @@
                     playerVel.y = 0;
                     if (moveKeys.w || joystickVector.y < -0.5) playerPos.y += 11.2 * dt;
                     if (moveKeys.s || joystickVector.y > 0.5) playerPos.y -= 11.2 * dt;
-                    isGrounded = false; lastGroundedTime = now;
                 } else { playerVel.y -= 196.2 * dt; }
 
                 if(d.length() > 0) {
@@ -425,16 +417,16 @@
                     charGroup.rotation.y = (isShiftLock || isFirstPerson) ? camYaw + Math.PI : Math.atan2(d.x, d.z);
                     
                     if(isGrounded || isOnLadder) {
-                        animTimer += dt * 14; const sw = Math.sin(animTimer);
-                        pL_Arm.rotation.x = sw * 0.78; pR_Arm.rotation.x = -sw * 0.78;
-                        pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
+                        animTimer += dt * 14;
+                        pL_Arm.rotation.x = Math.sin(animTimer) * 0.78; pR_Arm.rotation.x = -Math.sin(animTimer) * 0.78;
+                        pL_Leg.rotation.x = -Math.sin(animTimer) * 0.78; pR_Leg.rotation.x = Math.sin(animTimer) * 0.78;
                     }
                 } else {
                     if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
                     if(isGrounded) { pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85; }
                 }
 
-                // --- RESTORE JUMP ANIMATION ---
+                // RESTORED JUMP POSE
                 if(!isGrounded && !isOnLadder) {
                     pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2;
                     pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
@@ -442,7 +434,7 @@
                     pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
                 }
 
-                if(moveKeys.space && (now - lastGroundedTime < COYOTE_DURATION)) { playerVel.y = 62.6; isGrounded = false; isOnLadder = false; lastGroundedTime = 0; }
+                if(moveKeys.space && (now - lastGroundedTime < COYOTE_DURATION)) { playerVel.y = 62.6; isGrounded = false; lastGroundedTime = 0; }
                 playerPos.y += playerVel.y * dt;
 
                 if(!isOnLadder) {
@@ -462,15 +454,14 @@
                 const headWorldPos = new THREE.Vector3(); charHead.getWorldPosition(headWorldPos);
                 let camOffset = (isShiftLock && !isFirstPerson) ? new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).multiplyScalar(1.75) : new THREE.Vector3();
                 const ideal = new THREE.Vector3(headWorldPos.x + camOffset.x + Math.sin(camYaw)*Math.cos(camPitch)*camDist, headWorldPos.y + camOffset.y + Math.sin(camPitch)*camDist, headWorldPos.z + Math.cos(camYaw)*Math.cos(camPitch)*camDist);
+                
                 cameraRay.set(headWorldPos, ideal.clone().sub(headWorldPos).normalize());
                 const wallHits = cameraRay.intersectObjects(collisionObjs);
                 camera.position.copy((wallHits.length > 0 && wallHits[0].distance < camDist) ? wallHits[0].point.add(cameraRay.ray.direction.clone().multiplyScalar(-1.2)) : ideal);
                 camera.lookAt(headWorldPos.clone().add(camOffset));
                 
                 let op = THREE.MathUtils.clamp((headWorldPos.distanceTo(camera.position) - 2) / 3, 0, 1);
-                if (headWorldPos.distanceTo(camera.position) < 1.0) op = 0; 
-                charMaterials.forEach(m => { m.opacity = op; m.transparent = (op < 1); m.needsUpdate = true; });
-
+                charMaterials.forEach(m => { m.opacity = op; m.transparent = (op < 1); });
                 document.getElementById('height').innerText = Math.max(0, Math.floor(playerPos.y - 6.5));
             }
             renderer.render(scene, camera);
