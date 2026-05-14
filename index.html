@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tower Remake - Complete & Fixed Controls</title>
+    <title>Tower Remake - Smooth Rotation & Fixed Controls</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; user-select: none; touch-action: none; }
         #overlay {
@@ -62,7 +62,7 @@
 
     <div id="overlay">
         <h1>TOWER CLIMBER</h1>
-        <p>Gate Arch Radius: 2.5 Studs</p>
+        <p>Smooth Rotation Enabled</p>
         <button id="start-btn">PLAY</button>
     </div>
 
@@ -97,13 +97,12 @@
         
         let charGroup, charMaterials = [], collisionObjs = [], ladderObjs = []; 
         let charHead, pL_Arm, pR_Arm, pL_Leg, pR_Leg;
-        let orbitPivot; // For rotating platform
+        let orbitPivot;
         
         const floorRay = new THREE.Raycaster();
         const cameraRay = new THREE.Raycaster();
         const ladderRay = new THREE.Raycaster();
 
-        // Independent Touch Tracking State
         let activeLookTouchId = null;
         let activeJoystickTouchId = null;
         let joystickVector = new THREE.Vector2(0, 0);
@@ -130,6 +129,9 @@
             setupMobileControls();
             
             document.getElementById('start-btn').addEventListener('click', () => {
+                if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    renderer.domElement.requestPointerLock();
+                }
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('mobile-controls').style.display = 'block';
                 isRunning = true;
@@ -141,7 +143,6 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
-            // Keyboard support
             window.addEventListener('keydown', (e) => { 
                 const key = e.key.toLowerCase();
                 if(key in moveKeys) moveKeys[key] = true; 
@@ -153,7 +154,13 @@
                 if(e.code==='Space') moveKeys.space=false; 
             });
 
-            // --- IMPROVED MULTI-TOUCH LOGIC ---
+            document.addEventListener('mousemove', (e) => { 
+                if(document.pointerLockElement){ 
+                    camYaw -= e.movementX * 0.003; 
+                    camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * 0.003, -1.5, 1.5);
+                } 
+            });
+
             const joystickCont = document.getElementById('joystick-container');
             const jumpBtn = document.getElementById('jump-button');
 
@@ -162,11 +169,9 @@
                     const touch = e.changedTouches[i];
                     const isJoystick = joystickCont.contains(touch.target);
                     const isJump = jumpBtn.contains(touch.target);
-                    
                     if (!isJoystick && !isJump && activeLookTouchId === null) {
                         activeLookTouchId = touch.identifier;
-                        touchStartX = touch.clientX;
-                        touchStartY = touch.clientY;
+                        touchStartX = touch.clientX; touchStartY = touch.clientY;
                     }
                 }
                 if (e.touches.length >= 2) {
@@ -180,16 +185,13 @@
                     if (touch.identifier === activeLookTouchId) {
                         camYaw -= (touch.clientX - touchStartX) * 0.005;
                         camPitch = THREE.MathUtils.clamp(camPitch + (touch.clientY - touchStartY) * 0.005, -1.5, 1.5);
-                        touchStartX = touch.clientX;
-                        touchStartY = touch.clientY;
+                        touchStartX = touch.clientX; touchStartY = touch.clientY;
                     }
                 }
-                // Pinch zoom while moving
                 if (e.touches.length >= 2) {
                     const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                     if (lastPinchDist > 0) {
-                        const delta = lastPinchDist - dist;
-                        camDist = THREE.MathUtils.clamp(camDist + delta * 0.15, 0.1, 80);
+                        camDist = THREE.MathUtils.clamp(camDist + (lastPinchDist - dist) * 0.15, 0.1, 80);
                     }
                     lastPinchDist = dist;
                 }
@@ -201,6 +203,10 @@
                 }
                 if (e.touches.length < 2) lastPinchDist = -1;
             });
+
+            window.addEventListener('wheel', (e) => {
+                if(isRunning) camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.05, 0.1, 80);
+            }, { passive: true });
 
             clock = new THREE.Clock();
             loop();
@@ -233,9 +239,7 @@
             joystick.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeJoystickTouchId) {
-                        handleJoystickMove(e.changedTouches[i]);
-                    }
+                    if (e.changedTouches[i].identifier === activeJoystickTouchId) handleJoystickMove(e.changedTouches[i]);
                 }
             });
 
@@ -253,7 +257,6 @@
             jumpBtn.addEventListener('touchend', () => { moveKeys.space = false; });
         }
 
-        // --- FULL RESTORATION OF ASSETS ---
         function createBevelPart(w, h, d, color) {
             const b = 0.06;
             const s = new THREE.Shape();
@@ -301,11 +304,8 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 512; canvas.height = 128;
-            ctx.fillStyle = 'rgba(0,0,0,0)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'bold 70px "Segoe UI", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#555555'; 
+            ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 70px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#555555'; 
             ctx.fillText(text, 256, 80);
             return new THREE.CanvasTexture(canvas);
         }
@@ -332,7 +332,6 @@
             floorMesh.rotation.x = -Math.PI / 2; floorMesh.rotation.z = (9 * Math.PI) / 180; 
             scene.add(floorMesh); collisionObjs.push(floorMesh);
 
-            // BLUE PLUS SIGN FLOOR
             const pSize = 36, aWidth = 12, outerRad = 7.8, innerRad = 15.0;
             const rotOffset = -27 * (Math.PI / 180); 
             const ps = new THREE.Shape();
@@ -349,16 +348,13 @@
             plusMesh.rotation.x = -Math.PI/2; plusMesh.rotation.z = ((9 * Math.PI) / 180) + rotOffset;
             plusMesh.position.y = 0.01; scene.add(plusMesh);
 
-            // ORBITING PLATFORM
             orbitPivot = new THREE.Group();
             scene.add(orbitPivot);
             const circleMesh = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 1, 64), new THREE.MeshPhongMaterial({ color: THEME.glowOrange, emissive: THEME.glowOrange, emissiveIntensity: 1 }));
-            circleMesh.position.set(21, 0.5, 21); 
-            orbitPivot.add(circleMesh); 
+            circleMesh.position.set(21, 0.5, 21); orbitPivot.add(circleMesh); 
             orbitPivot.rotation.y = -rotOffset;
             collisionObjs.push(circleMesh);
 
-            // Gate
             const gateGroup = new THREE.Group();
             const gateShape = new THREE.Shape();
             gateShape.moveTo(-3.5, 0); gateShape.lineTo(-3.5, 8); gateShape.quadraticCurveTo(-3.5, 10, 0, 10); gateShape.quadraticCurveTo(3.5, 10, 3.5, 8); gateShape.lineTo(3.5, 0); gateShape.lineTo(2.5, 0); gateShape.lineTo(2.5, 8); gateShape.quadraticCurveTo(2.5, 9, 0, 9); gateShape.quadraticCurveTo(-2.5, 9, -2.5, 8); gateShape.lineTo(-2.5, 0); gateShape.lineTo(-3.5, 0);
@@ -414,19 +410,31 @@
                     playerPos.x += d.x; playerPos.z += d.z;
                     const dist = Math.sqrt(playerPos.x**2 + playerPos.z**2);
                     if (dist > APOTHEM - 1.2) { playerPos.x *= (APOTHEM-1.2)/dist; playerPos.z *= (APOTHEM-1.2)/dist; }
-                    charGroup.rotation.y = (isShiftLock || isFirstPerson) ? camYaw + Math.PI : Math.atan2(d.x, d.z);
                     
+                    // --- SMOOTH ROTATION START ---
+                    const targetAngle = (isShiftLock || isFirstPerson) ? camYaw + Math.PI : Math.atan2(d.x, d.z);
+                    let angleDiff = targetAngle - charGroup.rotation.y;
+                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    charGroup.rotation.y += angleDiff * Math.min(dt * 15, 1);
+                    // --- SMOOTH ROTATION END ---
+
                     if(isGrounded || isOnLadder) {
                         animTimer += dt * 14;
                         pL_Arm.rotation.x = Math.sin(animTimer) * 0.78; pR_Arm.rotation.x = -Math.sin(animTimer) * 0.78;
                         pL_Leg.rotation.x = -Math.sin(animTimer) * 0.78; pR_Leg.rotation.x = Math.sin(animTimer) * 0.78;
                     }
                 } else {
-                    if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
+                    // Smooth turn when standing in Shift Lock
+                    if (isShiftLock || isFirstPerson) {
+                        let angleDiff = (camYaw + Math.PI) - charGroup.rotation.y;
+                        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                        charGroup.rotation.y += angleDiff * Math.min(dt * 15, 1);
+                    }
                     if(isGrounded) { pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85; }
                 }
 
-                // RESTORED JUMP POSE
                 if(!isGrounded && !isOnLadder) {
                     pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2;
                     pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
