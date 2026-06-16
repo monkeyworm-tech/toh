@@ -2,73 +2,316 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tower Remake - Smooth Rotation & Fixed Controls</title>
+    <title>Tower Remake - Settings Dashboard</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; user-select: none; touch-action: none; }
-        #overlay {
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+        
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Open Sans', sans-serif; user-select: none; touch-action: none; }
+        
+        /* Loading Screen Overlay */
+        #loading-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: white; display: flex;
-            flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+            background-color: #111; z-index: 1000; display: flex;
+            justify-content: center; align-items: center; overflow: hidden;
+            transition: opacity 0.5s ease;
         }
-        button { padding: 20px 50px; font-size: 28px; cursor: pointer; background: #ffff00; color: #000; border: none; border-radius: 50px; font-weight: bold; }
-        #ui { position: absolute; top: 20px; left: 20px; color: #fff; pointer-events: none; text-shadow: 2px 2px 4px #000; font-size: 20px; z-index: 10; }
-        #shift-status { position: absolute; top: 50px; left: 20px; color: #00ff00; font-weight: bold; font-size: 14px; }
+
+        /* Customizable Panning Background Image */
+        #loading-bg {
+            position: absolute; top: 0; left: -10%; width: 120%; height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop'); /* Replace with desired image URL */
+            background-size: cover; background-position: center; filter: blur(4px) brightness(0.6);
+            animation: panBackground 8s ease-in-out infinite alternate; z-index: 1;
+        }
+
+        @keyframes panBackground {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-5%); }
+        }
+
+        #loading-container {
+            position: relative; width: 500px; height: 320px; display: flex;
+            flex-direction: column; align-items: center; z-index: 2;
+        }
+
+        /* Loading Screen Customizable Rounded Square Image styling */
+        #loading-icon-wrap {
+            width: 100px; height: 100px; background: rgb(0, 0, 0); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 4; position: absolute; top: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        
+        /* Stylized placeholder for the customizable rounded square */
+        #loading-custom-square {
+            width: 55px;
+            height: 55px;
+            background-color: #ffffff; /* Replace with background-image: url('YOUR_IMAGE_URL'); */
+            background-size: cover;
+            background-position: center;
+            border-radius: 14px; /* Adjust sharpness of the rounded square corners here */
+        }
+
+        /* Lower Offset Backdrop Card Box Grid */
+        #loading-card {
+            width: 100%; height: 200px; background: rgba(25, 25, 25, 0.85);
+            border-radius: 16px; margin-top: 50px; z-index: 3;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            align-items: center; padding-bottom: 30px; box-sizing: border-box;
+            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #loading-title { color: #ffffff; font-size: 32px; font-weight: 700; margin: 0 0 4px 0; letter-spacing: 1px; }
+        #loading-studio { color: #aaaaaa; font-size: 16px; font-weight: 400; margin: 0; }
+
+        /* Bottom Right Spinner Ring Element */
+        #loading-spinner {
+            position: absolute; bottom: 40px; right: 40px; width: 45px; height: 45px;
+            border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #ffffff;
+            border-radius: 50%; animation: spin 1s linear infinite; z-index: 5;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Top Left Icon Control */
+        #roblox-menu-btn {
+            position: absolute; top: 20px; left: 20px;
+            width: 50px; height: 50px;
+            background: rgb(0, 0, 0);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 50; pointer-events: auto;
+        }
+        #roblox-menu-btn svg { width: 36px; height: 36px; fill: #ffffff; }
+
+        /* Maximize Pause Menu Panel Dimensions & Animations */
+        #pause-menu {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9); opacity: 0;
+            width: 780px; height: 520px;
+            background: rgba(25, 25, 25, 0.92);
+            border-radius: 24px;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.6);
+            display: none; flex-direction: column;
+            padding: 30px; box-sizing: border-box;
+            z-index: 110; color: #fff;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+        }
+        #pause-menu.open {
+            display: flex; transform: translate(-50%, -50%) scale(1); opacity: 1;
+        }
+
+        /* Dashboard Internal Split Structure */
+        .settings-workspace {
+            display: flex; flex: 1; width: 100%; gap: 30px; overflow: hidden; margin-bottom: 20px;
+        }
+        
+        /* Sidebar Navigation Controls Layout */
+        .settings-sidebar {
+            width: 220px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;
+        }
+        .sidebar-heading {
+            font-size: 18px; font-weight: 600; color: #ffffff; padding: 12px 10px; border-radius: 8px; cursor: pointer;
+        }
+        .sidebar-divider { height: 1px; background: rgba(25, 25, 25, 0.15); margin: 4px 0; }
+
+        /* Active Settings Subpanels Views mapping to parameters */
+        .settings-content { flex: 1; display: flex; flex-direction: column; gap: 20px; padding-top: 10px; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .setting-label { font-size: 14px; color: #cccccc; font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Divided Segmented Slider Control Nodes styling */
+        .volume-control-wrap { display: flex; align-items: center; gap: 12px; }
+        .volume-adjust-btn {
+            width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffffff; background: transparent;
+            color: #ffffff; font-size: 18px; font-weight: bold; cursor: pointer; display: flex;
+            justify-content: center; align-items: center; line-height: 0; transition: transform 0.1s;
+        }
+        .volume-adjust-btn:active { transform: scale(0.9); }
+        .volume-bar-container { display: flex; gap: 4px; width: 180px; height: 16px; }
+        .volume-segment { flex: 1; height: 100%; border-radius: 2px; transition: background-color 0.1s; }
+        .segment-active { background-color: #ffffff; }
+        .segment-inactive { background-color: #3d3d3d; }
+
+        /* Bottom Row Menu Row Configuration */
+        .menu-btn-container { display: flex; justify-content: space-between; width: 100%; gap: 15px; }
+        .menu-row-btn {
+            flex: 1; height: 54px; font-size: 16px; font-weight: bold; font-family: 'Open Sans', sans-serif;
+            border: none; border-radius: 12px; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            color: #fff; transition: background 0.2s;
+        }
+        .btn-dark-gray { background: #3a3a3a; }
+        .btn-dark-gray:hover { background: #4a4a4a; }
+        .btn-blue { background: #0077ff; }
+        .btn-blue:hover { background: #0066dd; }
+        
+        /* Keyboard Keycaps */
+        .keycap {
+            background: #222; border: 1px solid #555; border-radius: 6px;
+            padding: 2px 8px; font-size: 11px; font-family: monospace;
+            box-shadow: 0 2px 0 #111; color: #aaa; display: inline-block;
+        }
+        .desktop-shortcut { display: none; }
+
+        /* Confirmation Panels Base Layers */
+        .confirmation-panel {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 15, 15, 0.95);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 120; color: white; text-align: center;
+        }
+        .confirmation-panel h3 { font-size: 28px; margin-bottom: 30px; max-width: 600px; line-height: 1.4; }
+        .confirm-btn-box { display: flex; gap: 20px; }
+        .confirm-btn {
+            padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 10px; cursor: pointer; box-sizing: border-box; font-family: 'Open Sans', sans-serif;
+        }
+        .btn-outline { background: transparent; border: 2px solid #ffffff; color: #ffffff; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        #damage-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 0, 0, 0.6); opacity: 0; pointer-events: none; z-index: 200;
+            transition: opacity 0.1s ease-out;
+        }
 
         /* Mobile Controls */
-        #mobile-controls {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 20; display: none;
+        #mobile-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; display: none; }
+        #joystick-container { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(40, 40, 40, 0.5); border: 2px solid #999; border-radius: 50%; pointer-events: auto; }
+        #joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: #aaa; border-radius: 50%; transform: translate(-50%, -50%); }
+        #jump-button { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; background: rgba(40, 40, 40, 0.5); border: 2px solid #999; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; }
+        #jump-button::after { content: ''; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 25px solid #999; }
+        #mobile-shiftlock { position: absolute; bottom: 180px; right: 65px; width: 70px; height: 70px; background: rgba(0, 0, 0, 0.5); border: 4px solid #ffffff; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; transition: border-color 0.1s, background-color 0.1s; }
+        #mobile-shiftlock.active { border-color: #0077ff; background: rgba(0, 119, 255, 0.3); }
+        .lock-icon { width: 24px; height: 28px; position: relative; }
+        .lock-shackle { width: 16px; height: 16px; border: 3px solid #ffffff; border-bottom: none; border-radius: 8px 8px 0 0; position: absolute; top: 0; left: 1px; box-sizing: border-box; }
+        #mobile-shiftlock.active .lock-shackle { border-color: #0077ff; }
+        .lock-body { width: 24px; height: 16px; background: #ffffff; border-radius: 3px; position: absolute; bottom: 0; left: 0; }
+        #mobile-shiftlock.active .lock-body { background: #0077ff; }
+
+        /* Movement Mode Select Style Override */
+        #movement-mode-select {
+            background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 12px;
+            border-radius: 8px; font-family: 'Open Sans', sans-serif; font-size: 14px;
+            outline: none; cursor: pointer; transition: background 0.1s;
         }
-        #joystick-container {
-            position: absolute; bottom: 50px; left: 50px;
-            width: 150px; height: 150px;
-            background: rgba(30, 30, 30, 0.6);
-            border: 4px solid #888;
-            border-radius: 50%;
-            pointer-events: auto;
-        }
-        #joystick-knob {
-            position: absolute; top: 50%; left: 50%;
-            width: 70px; height: 70px;
-            background: #888;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            pointer-events: none;
-        }
-        #jump-button {
-            position: absolute; bottom: 50px; right: 50px;
-            width: 150px; height: 150px;
-            background: rgba(30, 30, 30, 0.6);
-            border: 4px solid #888;
-            border-radius: 50%;
-            pointer-events: auto;
-            display: flex; justify-content: center; align-items: center;
-        }
-        #jump-button::after {
-            content: '';
-            width: 0; height: 0;
-            border-left: 25px solid transparent;
-            border-right: 25px solid transparent;
-            border-bottom: 40px solid #888;
-            margin-bottom: 5px;
-        }
+        #movement-mode-select:hover { background: #4a4a4a; }
     </style>
 </head>
 <body>
 
-    <div id="ui">ALTITUDE: <span id="height">0</span> studs</div>
-    <div id="shift-status">SHIFT LOCK: OFF</div>
+    <div id="damage-flash"></div>
 
-    <div id="overlay">
-        <h1>TOWER CLIMBER</h1>
-        <p>Smooth Rotation Enabled</p>
-        <button id="start-btn">PLAY</button>
+    <div id="loading-screen">
+        <div id="loading-bg"></div>
+        <div id="loading-container">
+            <div id="loading-icon-wrap">
+                <div id="loading-custom-square"></div>
+            </div>
+            <div id="loading-card">
+                <h1 id="loading-title">Tower of Hell</h1>
+                <p id="loading-studio">YXceptional Studios</p>
+            </div>
+        </div>
+        <div id="loading-spinner"></div>
+    </div>
+
+    <div id="roblox-menu-btn">
+        <svg viewBox="0 0 100 100">
+            <rect x="25" y="25" width="50" height="50" transform="rotate(15 50 50)" />
+            <rect x="41" y="41" width="18" height="18" fill="#000000" transform="rotate(15 50 50)" />
+        </svg>
+    </div>
+
+    <div id="pause-menu">
+        <div class="settings-workspace">
+            <div class="settings-sidebar">
+                <div id="heading-audio" class="sidebar-heading" style="background: rgba(255,255,255,0.1);">Audio</div>
+                <div class="sidebar-divider"></div>
+                <div id="heading-graphics" class="sidebar-heading" style="color:#777;">Display & Graphics</div>
+                <div class="sidebar-divider"></div>
+                <div id="heading-controls" class="sidebar-heading" style="color:#777;">View & Controls</div>
+            </div>
+            
+            <div class="settings-content">
+                <div id="section-audio">
+                    <div class="setting-row">
+                        <span class="setting-label">Volume</span>
+                        <div class="volume-control-wrap">
+                            <button id="vol-minus" class="volume-adjust-btn">-</button>
+                            <div id="volume-bars" class="volume-bar-container"></div>
+                            <button id="vol-plus" class="volume-adjust-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="section-graphics" style="display: none;">
+                    <div class="setting-row">
+                        <span class="setting-label">Graphics Quality</span>
+                        <span style="color:#aaa; font-size:14px;">Auto</span>
+                    </div>
+                </div>
+
+                <div id="section-controls" style="display: none;">
+                    <div class="setting-row">
+                        <span class="setting-label">Movement Mode</span>
+                        <select id="movement-mode-select">
+                            <option value="classic">Classic Thumbstick</option>
+                            <option value="dynamic">Dynamic Thumbstick</option>
+                            <option value="tap">Tap to Move</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-btn-container">
+            <button id="menu-leave" class="menu-row-btn btn-dark-gray">
+                Leave <span class="desktop-shortcut keycap">L</span>
+            </button>
+            <button id="menu-respawn" class="menu-row-btn btn-dark-gray">
+                Respawn <span class="desktop-shortcut keycap">R</span>
+            </button>
+            <button id="menu-resume" class="menu-row-btn btn-blue">
+                Resume <span class="desktop-shortcut keycap">Esc</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="leave-confirmation-panel" class="confirmation-panel">
+        <h3>Are you sure you want to leave the experience?</h3>
+        <div class="confirm-btn-box">
+            <button id="confirm-leave-yes" class="confirm-btn btn-blue">Leave</button>
+            <button id="confirm-leave-no" class="confirm-btn btn-outline">Don't Leave</button>
+        </div>
+    </div>
+
+    <div id="respawn-confirmation-panel" class="confirmation-panel">
+        <h3>Are you sure you want to respawn your character?</h3>
+        <div class="confirm-btn-box">
+            <button id="confirm-respawn-yes" class="confirm-btn btn-blue">Respawn</button>
+            <button id="confirm-respawn-no" class="confirm-btn btn-outline">Don't Respawn</button>
+        </div>
     </div>
 
     <div id="mobile-controls">
         <div id="joystick-container"><div id="joystick-knob"></div></div>
         <div id="jump-button"></div>
+        <div id="mobile-shiftlock">
+            <div class="lock-icon">
+                <div class="lock-shackle"></div>
+                <div class="lock-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dynamic-joystick-zone" style="position: absolute; bottom: 20px; left: 20px; width: 40%; height: 50%; border: 3px dashed rgba(255,255,255,0.4); background: rgba(255,255,255,0.02); border-radius: 20px; pointer-events: auto; display: none; box-sizing: border-box; z-index: 25;"></div>
+    
+    <div id="dynamic-joystick-container" style="position: absolute; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; display: none; pointer-events: none; transform: translate(-50%, -50%); z-index: 26;">
+        <div id="dynamic-joystick-knob" style="position: absolute; width: 44px; height: 44px; background: rgba(255,255,255,0.85); border-radius: 50%; transform: translate(-50%, -50%);"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
@@ -94,20 +337,38 @@
         let camYaw = 0, camPitch = 0, camDist = 25; 
         const FIRST_PERSON_DIST = 2.5; 
         let animTimer = 0, isRunning = false, isGrounded = true;
+        let isMenuOpen = false;
         
         let charGroup, charMaterials = [], collisionObjs = [], ladderObjs = []; 
-        let charHead, pL_Arm, pR_Arm, pL_Leg, pR_Leg;
-        let orbitPivot;
+        let charHead, pL_Arm, pR_Arm, pL_Leg, pR_Leg, charTorso;
         
+        let isRagdoll = false;
+        let ragdollParts = [];
+
+        // System Settings State Tracking Variables
+        let audioVolume = 8; // Steps 1 to 10
+        let audioCtx = null;
+        let currentMovementMode = 'dynamic'; // 'classic', 'dynamic', 'tap'
+        let dynamicTouchId = null;
+        let dynamicStartPos = new THREE.Vector2();
+        let trailCircles = [];
+        let tapTargetPos = null;
+        let tapMarkerMesh = null;
+
         const floorRay = new THREE.Raycaster();
+        const ceilingRay = new THREE.Raycaster();
         const cameraRay = new THREE.Raycaster();
         const ladderRay = new THREE.Raycaster();
 
-        let activeLookTouchId = null;
-        let activeJoystickTouchId = null;
         let joystickVector = new THREE.Vector2(0, 0);
-        let touchStartX, touchStartY;
-        let lastPinchDist = -1;
+        let joystickTouchId = null;
+        let isRightMouseDown = false;
+        
+        let cameraTouches = []; 
+        let initialPinchDist = null;
+        let initialCamDist = null;
+
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
 
         function init() {
             scene = new THREE.Scene();
@@ -127,15 +388,25 @@
             buildTower();
             buildCharacter();
             setupMobileControls();
+            setupMenuLogic();
+            buildVolumeInterface();
+            createTrailCircles();
             
-            document.getElementById('start-btn').addEventListener('click', () => {
-                if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    renderer.domElement.requestPointerLock();
+            // Handles Simulated Minimum 2-Second Auto-loading Sequence
+            setTimeout(() => {
+                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+                checkPointerLockNeeds();
+                
+                const loader = document.getElementById('loading-screen');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+
+                if (isMobile) {
+                    document.getElementById('mobile-controls').style.display = 'block';
                 }
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('mobile-controls').style.display = 'block';
+                updateMovementModeUI();
                 isRunning = true;
-            });
+            }, 2000);
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -143,73 +414,493 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement !== renderer.domElement && !isMobile && isRunning && !isMenuOpen) {
+                    if (isShiftLock || camDist <= FIRST_PERSON_DIST) {
+                        openPauseMenu();
+                    }
+                }
+            });
+
             window.addEventListener('keydown', (e) => { 
+                if (!isRunning && !isMenuOpen) return;
                 const key = e.key.toLowerCase();
+                
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    if (isMenuOpen) closePauseMenu(); else openPauseMenu();
+                    return;
+                }
+
+                if (isMenuOpen) {
+                    if (key === 'l') triggerLeaveSequence();
+                    if (key === 'r') triggerRespawnSequence();
+                    return;
+                }
+
                 if(key in moveKeys) moveKeys[key] = true; 
                 if(e.code==='Space') moveKeys.space=true; 
+                if(e.key === 'Shift') {
+                    isShiftLock = !isShiftLock;
+                    const mobBtn = document.getElementById('mobile-shiftlock');
+                    if (isShiftLock) mobBtn.classList.add('active');
+                    else mobBtn.classList.remove('active');
+                    checkPointerLockNeeds();
+                }
             });
+
             window.addEventListener('keyup', (e) => { 
                 const key = e.key.toLowerCase();
                 if(key in moveKeys) moveKeys[key] = false; 
                 if(e.code==='Space') moveKeys.space=false; 
             });
 
+            window.addEventListener('mousedown', (e) => {
+                if (e.button === 2) {
+                    isRightMouseDown = true;
+                    checkPointerLockNeeds();
+                }
+            });
+            window.addEventListener('mouseup', (e) => {
+                if (e.button === 2) {
+                    isRightMouseDown = false;
+                    checkPointerLockNeeds();
+                }
+            });
+            window.addEventListener('contextmenu', e => e.preventDefault());
+
             document.addEventListener('mousemove', (e) => { 
-                if(document.pointerLockElement){ 
+                if (!isRunning || isMenuOpen) return;
+                const hasLock = document.pointerLockElement === renderer.domElement;
+                if (hasLock || isRightMouseDown) { 
                     camYaw -= e.movementX * 0.003; 
                     camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * 0.003, -1.5, 1.5);
                 } 
             });
 
-            const joystickCont = document.getElementById('joystick-container');
-            const jumpBtn = document.getElementById('jump-button');
-
+            // Touch System Map Indexes
             document.addEventListener('touchstart', (e) => {
+                if (!isRunning || isMenuOpen) return;
+
+                const joyRect = document.getElementById('joystick-container').getBoundingClientRect();
+                const jumpRect = document.getElementById('jump-button').getBoundingClientRect();
+                const lockRect = document.getElementById('mobile-shiftlock').getBoundingClientRect();
+                const topMenuRect = document.getElementById('roblox-menu-btn').getBoundingClientRect();
+                const dZoneRect = document.getElementById('dynamic-joystick-zone').getBoundingClientRect();
+
                 for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    const isJoystick = joystickCont.contains(touch.target);
-                    const isJump = jumpBtn.contains(touch.target);
-                    if (!isJoystick && !isJump && activeLookTouchId === null) {
-                        activeLookTouchId = touch.identifier;
-                        touchStartX = touch.clientX; touchStartY = touch.clientY;
+                    const t = e.changedTouches[i];
+
+                    const isInsideJoystick = (currentMovementMode === 'classic' && t.clientX >= joyRect.left && t.clientX <= joyRect.right && t.clientY >= joyRect.top && t.clientY <= joyRect.bottom);
+                    const isInsideDynamicZone = (currentMovementMode === 'dynamic' && t.clientX >= dZoneRect.left && t.clientX <= dZoneRect.right && t.clientY >= dZoneRect.top && t.clientY <= dZoneRect.bottom);
+                    const isInsideJump = (t.clientX >= jumpRect.left && t.clientX <= jumpRect.right && t.clientY >= jumpRect.top && t.clientY <= jumpRect.bottom);
+                    const isInsideLock = (t.clientX >= lockRect.left && t.clientX <= lockRect.right && t.clientY >= lockRect.top && t.clientY <= lockRect.bottom);
+                    const isInsideTopMenu = (t.clientX >= topMenuRect.left && t.clientX <= topMenuRect.right && t.clientY >= topMenuRect.top && t.clientY <= topMenuRect.bottom);
+
+                    if (isInsideJoystick || isInsideDynamicZone || isInsideJump || isInsideLock || isInsideTopMenu) continue; 
+
+                    if (cameraTouches.length < 2) {
+                        cameraTouches.push({ id: t.identifier, lastX: t.clientX, lastY: t.clientY });
                     }
                 }
-                if (e.touches.length >= 2) {
-                    lastPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+
+                if (cameraTouches.length === 2) {
+                    let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
+                    let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
+                    if (t1 && t2) {
+                        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                        initialCamDist = camDist;
+                    }
                 }
             }, { passive: false });
 
             document.addEventListener('touchmove', (e) => {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    if (touch.identifier === activeLookTouchId) {
-                        camYaw -= (touch.clientX - touchStartX) * 0.005;
-                        camPitch = THREE.MathUtils.clamp(camPitch + (touch.clientY - touchStartY) * 0.005, -1.5, 1.5);
-                        touchStartX = touch.clientX; touchStartY = touch.clientY;
+                if (!isRunning || isMenuOpen) return;
+
+                if (cameraTouches.length === 2 && initialPinchDist !== null) {
+                    let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
+                    let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
+                    if (t1 && t2) {
+                        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                        const factor = initialPinchDist / currentDist;
+                        camDist = THREE.MathUtils.clamp(initialCamDist * factor, 0.1, 80);
                     }
+                    return;
                 }
-                if (e.touches.length >= 2) {
-                    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    if (lastPinchDist > 0) {
-                        camDist = THREE.MathUtils.clamp(camDist + (lastPinchDist - dist) * 0.15, 0.1, 80);
+
+                if (cameraTouches.length === 1) {
+                    let t = findCameraTouch(cameraTouches[0].id, e.touches);
+                    let cache = cameraTouches[0];
+                    if (t) {
+                        camYaw -= (t.clientX - cache.lastX) * 0.006;
+                        camPitch = THREE.MathUtils.clamp(camPitch + (t.clientY - cache.lastY) * 0.006, -1.5, 1.5);
+                        cache.lastX = t.clientX; cache.lastY = t.clientY;
                     }
-                    lastPinchDist = dist;
                 }
             }, { passive: false });
 
-            document.addEventListener('touchend', (e) => {
+            const clearCameraTouches = (e) => {
                 for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeLookTouchId) activeLookTouchId = null;
+                    const id = e.changedTouches[i].identifier;
+                    cameraTouches = cameraTouches.filter(ct => ct.id !== id);
                 }
-                if (e.touches.length < 2) lastPinchDist = -1;
-            });
+                if (cameraTouches.length < 2) initialPinchDist = null;
+            };
+            document.addEventListener('touchend', clearCameraTouches);
+            document.addEventListener('touchcancel', clearCameraTouches);
 
             window.addEventListener('wheel', (e) => {
-                if(isRunning) camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.05, 0.1, 80);
+                if(isRunning && !isMenuOpen) {
+                    camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.05, 0.1, 80);
+                    checkPointerLockNeeds();
+                }
             }, { passive: true });
+
+            // Tap to Move Interceptors Setup
+            window.addEventListener('touchstart', (e) => {
+                if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
+                const target = e.target;
+                if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock')) return;
+                
+                const touch = e.changedTouches[0];
+                const mouse = new THREE.Vector2((touch.clientX / window.innerWidth) * 2 - 1, -(touch.clientY / window.innerHeight) * 2 + 1);
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(collisionObjs);
+                if (intersects.length > 0) {
+                    tapTargetPos = intersects[0].point.clone();
+                    createTapMarker(tapTargetPos);
+                }
+            }, { passive: true });
+
+            window.addEventListener('mousedown', (e) => {
+                if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning || e.button !== 0) return;
+                const target = e.target;
+                if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu')) return;
+                
+                const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(collisionObjs);
+                if (intersects.length > 0) {
+                    tapTargetPos = intersects[0].point.clone();
+                    createTapMarker(tapTargetPos);
+                }
+            });
 
             clock = new THREE.Clock();
             loop();
+        }
+
+        // --- Dashboard Setup and Interface Injections ---
+        function buildVolumeInterface() {
+            const container = document.getElementById('volume-bars');
+            container.innerHTML = '';
+            for(let i=1; i<=10; i++) {
+                const el = document.createElement('div');
+                el.className = 'volume-segment';
+                el.id = `vol-seg-${i}`;
+                container.appendChild(el);
+            }
+            updateVolumeVisuals();
+        }
+
+        function updateVolumeVisuals() {
+            for(let i=1; i<=10; i++) {
+                const el = document.getElementById(`vol-seg-${i}`);
+                if(el) {
+                    if(i <= audioVolume) {
+                        el.className = 'volume-segment segment-active';
+                    } else {
+                        el.className = 'volume-segment segment-inactive';
+                    }
+                }
+            }
+        }
+
+        // Programmatic Synthesized "Oof" Sound Effect Generator
+        function playOofSound() {
+            if (!audioCtx) return;
+            // Map 1-10 volume scaling into context normalized numeric thresholds
+            const dynamicGainValue = (audioVolume / 10) * 0.4;
+            if (dynamicGainValue <= 0) return;
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'triangle';
+            
+            // Classic pitch climb simulation parameters
+            const startTime = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(140, startTime);
+            osc.frequency.linearRampToValueAtTime(280, startTime + 0.12);
+
+            gainNode.gain.setValueAtTime(dynamicGainValue, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + 0.36);
+        }
+
+        function setupTabs() {
+            const tabs = ['audio', 'graphics', 'controls'];
+            tabs.forEach(tab => {
+                const heading = document.getElementById(`heading-${tab}`);
+                if (heading) {
+                    heading.addEventListener('click', () => {
+                        tabs.forEach(t => {
+                            const h = document.getElementById(`heading-${t}`);
+                            const s = document.getElementById(`section-${t}`);
+                            if (h) {
+                                if (t === tab) {
+                                    h.style.color = '#ffffff';
+                                    h.style.background = 'rgba(255,255,255,0.1)';
+                                } else {
+                                    h.style.color = '#777777';
+                                    h.style.background = 'transparent';
+                                }
+                            }
+                            if (s) s.style.display = (t === tab) ? 'block' : 'none';
+                        });
+                    });
+                }
+            });
+        }
+
+        function setupMenuLogic() {
+            if(!isMobile) {
+                document.querySelectorAll('.desktop-shortcut').forEach(el => el.style.display = 'inline-block');
+            }
+
+            document.getElementById('roblox-menu-btn').addEventListener('click', () => {
+                if (isRagdoll || !isRunning) return;
+                if (isMenuOpen) closePauseMenu(); else openPauseMenu();
+            });
+
+            document.getElementById('menu-resume').addEventListener('click', closePauseMenu);
+            document.getElementById('menu-respawn').addEventListener('click', triggerRespawnSequence);
+            document.getElementById('menu-leave').addEventListener('click', triggerLeaveSequence);
+
+            // Volume Modifiers Buttons Listeners
+            document.getElementById('vol-minus').addEventListener('click', () => {
+                if(audioVolume > 1) { audioVolume--; updateVolumeVisuals(); }
+            });
+            document.getElementById('vol-plus').addEventListener('click', () => {
+                if(audioVolume < 10) { audioVolume++; updateVolumeVisuals(); }
+            });
+
+            // Movement Mode select listener
+            document.getElementById('movement-mode-select').addEventListener('change', (e) => {
+                currentMovementMode = e.target.value;
+                updateMovementModeUI();
+            });
+
+            setupTabs();
+
+            // Leave execution bindings
+            document.getElementById('confirm-leave-no').addEventListener('click', () => {
+                document.getElementById('leave-confirmation-panel').style.display = 'none';
+                document.getElementById('pause-menu').classList.add('open');
+            });
+            document.getElementById('confirm-leave-yes').addEventListener('click', () => {
+                window.location.href = "https://www.roblox.com";
+            });
+
+            // Respawn execution bindings
+            document.getElementById('confirm-respawn-no').addEventListener('click', () => {
+                document.getElementById('respawn-confirmation-panel').style.display = 'none';
+                document.getElementById('pause-menu').classList.add('open');
+            });
+            document.getElementById('confirm-respawn-yes').addEventListener('click', executeRagdollRespawn);
+        }
+
+        function openPauseMenu() {
+            if (isRagdoll || !isRunning) return;
+            isMenuOpen = true;
+            
+            const menu = document.getElementById('pause-menu');
+            menu.style.display = 'flex';
+            setTimeout(() => menu.classList.add('open'), 10);
+
+            if(document.pointerLockElement === renderer.domElement) document.exitPointerLock();
+            Object.keys(moveKeys).forEach(k => moveKeys[k] = false);
+            joystickVector.set(0, 0);
+        }
+
+        function closePauseMenu() {
+            isMenuOpen = false;
+            const menu = document.getElementById('pause-menu');
+            menu.classList.remove('open');
+            
+            document.getElementById('leave-confirmation-panel').style.display = 'none';
+            document.getElementById('respawn-confirmation-panel').style.display = 'none';
+            
+            setTimeout(() => {
+                if(!isMenuOpen) menu.style.display = 'none';
+            }, 250);
+            
+            checkPointerLockNeeds();
+        }
+
+        function triggerLeaveSequence() {
+            document.getElementById('pause-menu').classList.remove('open');
+            setTimeout(() => {
+                document.getElementById('pause-menu').style.display = 'none';
+                document.getElementById('leave-confirmation-panel').style.display = 'flex';
+            }, 250);
+        }
+
+        function triggerRespawnSequence() {
+            document.getElementById('pause-menu').classList.remove('open');
+            setTimeout(() => {
+                document.getElementById('pause-menu').style.display = 'none';
+                document.getElementById('respawn-confirmation-panel').style.display = 'flex';
+            }, 250);
+        }
+
+        function executeRagdollRespawn() {
+            closePauseMenu();
+            if (isRagdoll) return;
+            isRagdoll = true;
+
+            // Fire Oof Audio Engine Track Node
+            playOofSound();
+
+            const df = document.getElementById('damage-flash');
+            df.style.opacity = '1';
+            setTimeout(() => { df.style.opacity = '0'; }, 200);
+
+            const partsToBreak = [
+                { obj: charHead, offset: new THREE.Vector3(0, 4.75, 0) },
+                { obj: charTorso, offset: new THREE.Vector3(0, 3, 0) },
+                { obj: pL_Arm, offset: new THREE.Vector3(-1.55, 3.5, 0) },
+                { obj: pR_Arm, offset: new THREE.Vector3(1.55, 3.5, 0) },
+                { obj: pL_Leg, offset: new THREE.Vector3(-0.55, 2, 0) },
+                { obj: pR_Leg, offset: new THREE.Vector3(0.55, 2, 0) }
+            ];
+
+            ragdollParts = [];
+
+            partsToBreak.forEach(item => {
+                const worldPos = new THREE.Vector3();
+                item.obj.getWorldPosition(worldPos);
+                scene.attach(item.obj);
+
+                ragdollParts.push({
+                    mesh: item.obj,
+                    pos: worldPos,
+                    vel: new THREE.Vector3(
+                        (Math.random() - 0.5) * 15,
+                        Math.random() * 20 + 15,
+                        (Math.random() - 0.5) * 15
+                    ),
+                    rotVel: new THREE.Vector3(
+                        (Math.random() - 0.5) * 10,
+                        (Math.random() - 0.5) * 10,
+                        (Math.random() - 0.5) * 10
+                    )
+                });
+            });
+
+            setTimeout(() => {
+                charGroup.add(charHead); charHead.position.set(0, 4.75, 0); charHead.rotation.set(0,0,0);
+                charGroup.add(charTorso); charTorso.position.set(0, 3, 0); charTorso.rotation.set(0,0,0);
+                charGroup.add(pL_Arm); pL_Arm.position.set(-1.55, 3.5, 0); pL_Arm.rotation.set(0,0,0);
+                charGroup.add(pR_Arm); pR_Arm.position.set(1.55, 3.5, 0); pR_Arm.rotation.set(0,0,0);
+                charGroup.add(pL_Leg); pL_Leg.position.set(-0.55, 2, 0); pL_Leg.rotation.set(0,0,0);
+                charGroup.add(pR_Leg); pR_Leg.position.set(0.55, 2, 0); pR_Leg.rotation.set(0,0,0);
+
+                playerPos.set(OUTER_RADIUS - 8, 6.5, 0);
+                playerVel.set(0, 0, 0);
+                camYaw = 0; camPitch = 0;
+                isRagdoll = false;
+            }, 3000);
+        }
+
+        function findCameraTouch(id, touchList) {
+            for (let i = 0; i < touchList.length; i++) {
+                if (touchList[i].identifier === id) return touchList[i];
+            }
+            return null;
+        }
+
+        function checkPointerLockNeeds() {
+            if (isMobile || isMenuOpen || isRagdoll || !isRunning) return;
+            const isFirstPerson = camDist <= FIRST_PERSON_DIST;
+            if (isShiftLock || isFirstPerson) {
+                if (document.pointerLockElement !== renderer.domElement) {
+                    renderer.domElement.requestPointerLock();
+                }
+            } else if (!isRightMouseDown && document.pointerLockElement === renderer.domElement) {
+                document.exitPointerLock();
+            }
+        }
+
+        function createTrailCircles() {
+            for (let i = 0; i < 5; i++) {
+                const circle = document.createElement('div');
+                circle.style.position = 'absolute';
+                circle.style.width = '12px';
+                circle.style.height = '12px';
+                circle.style.background = 'rgba(255, 255, 255, 0.6)';
+                circle.style.borderRadius = '50%';
+                circle.style.pointerEvents = 'none';
+                circle.style.display = 'none';
+                circle.style.zIndex = '27';
+                circle.style.transform = 'translate(-50%, -50%)';
+                document.body.appendChild(circle);
+                trailCircles.push(circle);
+            }
+        }
+
+        function activateDynamicZoneVisual() {
+            const dynamicZone = document.getElementById('dynamic-joystick-zone');
+            if (!dynamicZone) return;
+            dynamicZone.style.display = 'block';
+            dynamicZone.style.transition = 'none';
+            dynamicZone.style.opacity = '1';
+            dynamicZone.offsetHeight; // Force reflow
+            dynamicZone.style.transition = 'opacity 1.5s ease';
+            setTimeout(() => {
+                if (currentMovementMode === 'dynamic') {
+                    dynamicZone.style.opacity = '0';
+                }
+            }, 1500);
+        }
+
+        function updateMovementModeUI() {
+            const classicJoystick = document.getElementById('joystick-container');
+            const dynamicZone = document.getElementById('dynamic-joystick-zone');
+            
+            if (currentMovementMode === 'classic') {
+                if (classicJoystick) classicJoystick.style.display = 'block';
+                if (dynamicZone) dynamicZone.style.display = 'none';
+            } else if (currentMovementMode === 'dynamic') {
+                if (classicJoystick) classicJoystick.style.display = 'none';
+                activateDynamicZoneVisual();
+            } else if (currentMovementMode === 'tap') {
+                if (classicJoystick) classicJoystick.style.display = 'none';
+                if (dynamicZone) dynamicZone.style.display = 'none';
+            }
+            tapTargetPos = null;
+            joystickVector.set(0, 0);
+        }
+
+        function createTapMarker(pos) {
+            if (!tapMarkerMesh) {
+                const geo = new THREE.RingGeometry(0.1, 0.6, 32);
+                geo.rotateX(-Math.PI / 2);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+                tapMarkerMesh = new THREE.Mesh(geo, mat);
+                scene.add(tapMarkerMesh);
+            }
+            tapMarkerMesh.position.copy(pos).y += 0.05;
+            tapMarkerMesh.scale.set(1, 1, 1);
+            tapMarkerMesh.material.opacity = 0.8;
+            tapMarkerMesh.visible = true;
         }
 
         function setupMobileControls() {
@@ -217,59 +908,139 @@
             const knob = document.getElementById('joystick-knob');
             const jumpBtn = document.getElementById('jump-button');
 
-            const handleJoystickMove = (touch) => {
+            const handleJoystick = (e) => {
+                e.preventDefault();
+                if (currentMovementMode !== 'classic' || isMenuOpen || isRagdoll || !isRunning) return;
+                if (joystickTouchId === null && e.type === 'touchstart') {
+                    joystickTouchId = e.changedTouches[0].identifier;
+                }
+                
+                let touch = null;
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === joystickTouchId) touch = e.touches[i];
+                }
+                if (!touch) return;
+
                 const rect = joystick.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 const maxLen = rect.width / 2;
+
                 let dx = touch.clientX - centerX;
                 let dy = touch.clientY - centerY;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist > maxLen) { dx *= maxLen / dist; dy *= maxLen / dist; }
+
+                if (dist > maxLen) {
+                    dx *= maxLen / dist; dy *= maxLen / dist;
+                }
+
                 knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
                 joystickVector.set(dx / maxLen, dy / maxLen);
             };
 
-            joystick.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                activeJoystickTouchId = e.changedTouches[0].identifier;
-                handleJoystickMove(e.changedTouches[0]);
-            });
-
-            joystick.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeJoystickTouchId) handleJoystickMove(e.changedTouches[i]);
-                }
-            });
-
+            joystick.addEventListener('touchstart', handleJoystick);
+            joystick.addEventListener('touchmove', handleJoystick);
             joystick.addEventListener('touchend', (e) => {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeJoystickTouchId) {
-                        activeJoystickTouchId = null;
+                if (currentMovementMode !== 'classic') return;
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    if(e.changedTouches[i].identifier === joystickTouchId) {
+                        joystickTouchId = null;
                         knob.style.transform = `translate(-50%, -50%)`;
                         joystickVector.set(0, 0);
                     }
                 }
             });
 
-            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveKeys.space = true; });
-            jumpBtn.addEventListener('touchend', () => { moveKeys.space = false; });
+            // Dynamic Zone Event Touch Bindings
+            const dynamicZone = document.getElementById('dynamic-joystick-zone');
+            const dynamicContainer = document.getElementById('dynamic-joystick-container');
+            const dynamicKnob = document.getElementById('dynamic-joystick-knob');
+
+            dynamicZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (currentMovementMode !== 'dynamic' || isMenuOpen || isRagdoll || !isRunning) return;
+                if (dynamicTouchId === null) {
+                    const touch = e.changedTouches[0];
+                    dynamicTouchId = touch.identifier;
+                    dynamicStartPos.set(touch.clientX, touch.clientY);
+                    
+                    dynamicContainer.style.left = `${touch.clientX}px`;
+                    dynamicContainer.style.top = `${touch.clientY}px`;
+                    dynamicContainer.style.display = 'block';
+                    
+                    dynamicKnob.style.left = '50%';
+                    dynamicKnob.style.top = '50%';
+                }
+            }, { passive: false });
+
+            dynamicZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (currentMovementMode !== 'dynamic' || isMenuOpen || isRagdoll || !isRunning || dynamicTouchId === null) return;
+                
+                let touch = null;
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === dynamicTouchId) touch = e.touches[i];
+                }
+                if (!touch) return;
+                
+                let dx = touch.clientX - dynamicStartPos.x;
+                let dy = touch.clientY - dynamicStartPos.y;
+                const maxLen = 50; 
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist > maxLen) {
+                    dx *= maxLen / dist;
+                    dy *= maxLen / dist;
+                }
+                
+                dynamicKnob.style.left = `calc(50% + ${dx}px)`;
+                dynamicKnob.style.top = `calc(50% + ${dy}px)`;
+                joystickVector.set(dx / maxLen, dy / maxLen);
+                
+                for (let i = 0; i < trailCircles.length; i++) {
+                    const t = (i + 1) / (trailCircles.length + 1);
+                    trailCircles[i].style.left = `${dynamicStartPos.x + dx * t}px`;
+                    trailCircles[i].style.top = `${dynamicStartPos.y + dy * t}px`;
+                    trailCircles[i].style.display = 'block';
+                }
+            }, { passive: false });
+
+            const endDynamicTouch = (e) => {
+                if (dynamicTouchId === null) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === dynamicTouchId) {
+                        dynamicTouchId = null;
+                        dynamicContainer.style.display = 'none';
+                        joystickVector.set(0, 0);
+                        trailCircles.forEach(c => c.style.display = 'none');
+                    }
+                }
+            };
+            dynamicZone.addEventListener('touchend', endDynamicTouch);
+            dynamicZone.addEventListener('touchcancel', endDynamicTouch);
+
+            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (!isMenuOpen && !isRagdoll && isRunning) moveKeys.space = true; });
+            jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); moveKeys.space = false; });
+
+            document.getElementById('mobile-shiftlock').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (isMenuOpen || isRagdoll || !isRunning) return;
+                isShiftLock = !isShiftLock;
+                const mobBtn = document.getElementById('mobile-shiftlock');
+                if (isShiftLock) mobBtn.classList.add('active');
+                else mobBtn.classList.remove('active');
+            });
         }
 
         function createBevelPart(w, h, d, color) {
-            const b = 0.06;
-            const s = new THREE.Shape();
-            const x = -w/2, y = -h/2;
+            const b = 0.06; const s = new THREE.Shape(); const x = -w/2, y = -h/2;
             s.moveTo(x+b, y); s.lineTo(x+w-b, y); s.quadraticCurveTo(x+w, y, x+w, y+b);
             s.lineTo(x+w, y+h-b); s.quadraticCurveTo(x+w, y+h, x+w-b, y+h);
             s.lineTo(x+b, y+h); s.quadraticCurveTo(x, y+h, x, y+h-b);
             s.lineTo(x, y+b); s.quadraticCurveTo(x, y, x+b, y);
             const g = new THREE.ExtrudeGeometry(s, { depth: d-(b*2), bevelEnabled: true, bevelSize: b, bevelThickness: b, bevelSegments: 2 });
-            g.center();
-            const m = new THREE.MeshPhongMaterial({ color, transparent: true });
-            charMaterials.push(m);
-            return new THREE.Mesh(g, m);
+            g.center(); const m = new THREE.MeshPhongMaterial({ color, transparent: true });
+            charMaterials.push(m); return new THREE.Mesh(g, m);
         }
 
         function buildCharacter() {
@@ -277,12 +1048,9 @@
             const hr = 0.75, hh = 1.4, hb = 0.15;
             const pts = [new THREE.Vector2(0, -hh/2), new THREE.Vector2(hr-hb, -hh/2), new THREE.Vector2(hr, -hh/2+hb), new THREE.Vector2(hr, hh/2-hb), new THREE.Vector2(hr-hb, hh/2), new THREE.Vector2(0, hh/2)];
             const headMat = new THREE.MeshPhongMaterial({ color: THEME.head, transparent: true });
-            charMaterials.push(headMat);
-            charHead = new THREE.Mesh(new THREE.LatheGeometry(pts, 32), headMat);
-            charHead.position.y = 4.75;
+            charMaterials.push(headMat); charHead = new THREE.Mesh(new THREE.LatheGeometry(pts, 32), headMat); charHead.position.y = 4.75;
             
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true });
-            charMaterials.push(eyeMat);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true }); charMaterials.push(eyeMat);
             const e1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.1), eyeMat); e1.position.set(-0.25, 0.1, 0.78);
             const e2 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.1), eyeMat); e2.position.set(0.25, 0.1, 0.78);
             charHead.add(e1, e2);
@@ -290,7 +1058,7 @@
             charHead.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(mPts), 20, 0.04, 8, false), eyeMat));
             charGroup.add(charHead);
 
-            const torso = createBevelPart(2, 2, 1, THEME.torso); torso.position.y = 3; charGroup.add(torso);
+            charTorso = createBevelPart(2, 2, 1, THEME.torso); charTorso.position.y = 3; charGroup.add(charTorso);
             const addLimb = (x, y, color, off) => {
                 const p = new THREE.Group(); p.position.set(x, y, 0);
                 const m = createBevelPart(1, 2, 1, color); m.position.y = off; p.add(m); charGroup.add(p); return p;
@@ -301,12 +1069,9 @@
         }
 
         function createTextTexture(text) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 512; canvas.height = 128;
-            ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'bold 70px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#555555'; 
-            ctx.fillText(text, 256, 80);
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            canvas.width = 512; canvas.height = 128; ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 70px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#555555'; ctx.fillText(text, 256, 80);
             return new THREE.CanvasTexture(canvas);
         }
 
@@ -324,7 +1089,8 @@
             const holePath = new THREE.Path();
             for (let i = 0; i <= NUM_SIDES; i++) {
                 const angle = (i / NUM_SIDES) * Math.PI * 2;
-                holePath[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(angle) * HOLE_RADIUS, Math.sin(angle) * HOLE_RADIUS);
+                circleX = Math.cos(angle) * HOLE_RADIUS; circleY = Math.sin(angle) * HOLE_RADIUS;
+                holePath[i === 0 ? 'moveTo' : 'lineTo'](circleX, circleY);
             }
             floorShape.holes.push(holePath);
 
@@ -332,12 +1098,10 @@
             floorMesh.rotation.x = -Math.PI / 2; floorMesh.rotation.z = (9 * Math.PI) / 180; 
             scene.add(floorMesh); collisionObjs.push(floorMesh);
 
-            const pSize = 36, aWidth = 12, outerRad = 7.8, innerRad = 15.0;
-            const rotOffset = -27 * (Math.PI / 180); 
+            const pSize = 36, aWidth = 12, outerRad = 7.8, innerRad = 15.0; const rotOffset = -27 * (Math.PI / 180); 
             const ps = new THREE.Shape();
             ps.moveTo(-aWidth/2+outerRad, pSize); ps.lineTo(aWidth/2-outerRad, pSize); ps.quadraticCurveTo(aWidth/2, pSize, aWidth/2, pSize-outerRad);
-            ps.lineTo(aWidth/2, aWidth/2); ps.lineTo(aWidth/2, -aWidth/2);
-            ps.lineTo(aWidth/2, -pSize+outerRad); ps.quadraticCurveTo(aWidth/2, -pSize, aWidth/2-outerRad, -pSize);
+            ps.lineTo(aWidth/2, aWidth/2); ps.lineTo(aWidth/2, -aWidth/2); ps.lineTo(aWidth/2, -pSize+outerRad); ps.quadraticCurveTo(aWidth/2, -pSize, aWidth/2-outerRad, -pSize);
             ps.lineTo(-aWidth/2+outerRad, -pSize); ps.quadraticCurveTo(-aWidth/2, -pSize, -aWidth/2, -pSize+outerRad);
             ps.lineTo(-aWidth/2, -aWidth/2-innerRad); ps.quadraticCurveTo(-aWidth/2, -aWidth/2, -aWidth/2-innerRad, -aWidth/2);
             ps.lineTo(-pSize+outerRad, -aWidth/2); ps.quadraticCurveTo(-pSize, -aWidth/2, -pSize, -aWidth/2+outerRad);
@@ -348,37 +1112,31 @@
             plusMesh.rotation.x = -Math.PI/2; plusMesh.rotation.z = ((9 * Math.PI) / 180) + rotOffset;
             plusMesh.position.y = 0.01; scene.add(plusMesh);
 
-            orbitPivot = new THREE.Group();
-            scene.add(orbitPivot);
+            const orbitPivot = new THREE.Group(); scene.add(orbitPivot);
             const circleMesh = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 1, 64), new THREE.MeshPhongMaterial({ color: THEME.glowOrange, emissive: THEME.glowOrange, emissiveIntensity: 1 }));
-            circleMesh.position.set(21, 0.5, 21); orbitPivot.add(circleMesh); 
-            orbitPivot.rotation.y = -rotOffset;
+            circleMesh.position.set(21, 0.5, 21); orbitPivot.add(circleMesh); orbitPivot.rotation.y = -rotOffset;
             collisionObjs.push(circleMesh);
 
-            const gateGroup = new THREE.Group();
-            const gateShape = new THREE.Shape();
-            gateShape.moveTo(-3.5, 0); gateShape.lineTo(-3.5, 8); gateShape.quadraticCurveTo(-3.5, 10, 0, 10); gateShape.quadraticCurveTo(3.5, 10, 3.5, 8); gateShape.lineTo(3.5, 0); gateShape.lineTo(2.5, 0); gateShape.lineTo(2.5, 8); gateShape.quadraticCurveTo(2.5, 9, 0, 9); gateShape.quadraticCurveTo(-2.5, 9, -2.5, 8); gateShape.lineTo(-2.5, 0); gateShape.lineTo(-3.5, 0);
+            const gateGroup = new THREE.Group(); const gateShape = new THREE.Shape();
+            gateShape.moveTo(-3.5, 0); gateShape.lineTo(-3.5, 8); gateShape.quadraticCurveTo(-3.5, 10, 0, 10); gateShape.quadraticCurveTo(3.5, 10, 3.5, 8); gateShape.lineTo(3.5, 0);
+            gateShape.lineTo(2.5, 0); gateShape.lineTo(2.5, 8); gateShape.quadraticCurveTo(2.5, 9, 0, 9); gateShape.quadraticCurveTo(-2.5, 9, -2.5, 8); gateShape.lineTo(-2.5, 0); gateShape.lineTo(-3.5, 0);
             const gateMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(gateShape, { depth: 0.5, bevelEnabled: false }), new THREE.MeshPhongMaterial({ color: THEME.gray }));
             gateMesh.position.set(0, 0, -APOTHEM); gateGroup.add(gateMesh); collisionObjs.push(gateMesh);
+
             const textSpriteMat = new THREE.MeshBasicMaterial({ map: createTextTexture("PRO TOWERS"), transparent: true });
-            const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), textSpriteMat);
-            textPlane.position.set(0, 11.2, -APOTHEM + 0.51); gateGroup.add(textPlane);
+            const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), textSpriteMat); textPlane.position.set(0, 11.2, -APOTHEM + 0.51); gateGroup.add(textPlane);
             gateGroup.rotation.y = (17 * (Math.PI * 2 / NUM_SIDES)); scene.add(gateGroup);
 
             for(let i=0; i<19; i++) {
-                const stepGroup = new THREE.Group();
-                const thickness = (i === 18) ? 0.5 : 1.0;
+                const stepGroup = new THREE.Group(); const thickness = (i === 18) ? 0.5 : 1.0;
                 const step = new THREE.Mesh(new THREE.BoxGeometry(STEP_WIDTH, thickness, STEP_DEPTH), new THREE.MeshPhongMaterial({ color: THEME.gray }));
-                const angle = i * (Math.PI * 2 / NUM_SIDES);
-                const r = APOTHEM - (STEP_DEPTH / 4);
+                const angle = i * (Math.PI * 2 / NUM_SIDES); const r = APOTHEM - (STEP_DEPTH / 4);
                 stepGroup.position.set(Math.cos(angle)*r, i * 1.0 + ((i === 18) ? 0.25 : 0.5), Math.sin(angle)*r);
-                stepGroup.rotation.y = -angle;
-                stepGroup.add(step); scene.add(stepGroup); collisionObjs.push(step);
+                stepGroup.rotation.y = -angle; stepGroup.add(step); scene.add(stepGroup); collisionObjs.push(step);
                 if (i === 18) {
                     for (let j = 1; j <= 9; j++) {
                         const rung = new THREE.Mesh(new THREE.BoxGeometry(STEP_WIDTH, 1, 1), new THREE.MeshPhongMaterial({ color: THEME.gray }));
-                        rung.position.set(0, -j * 2, (STEP_DEPTH / 2) - 0.5);
-                        step.add(rung); ladderObjs.push(rung); collisionObjs.push(rung); 
+                        rung.position.set(0, -j * 2, (STEP_DEPTH / 2) - 0.5); step.add(rung); ladderObjs.push(rung); collisionObjs.push(rung); 
                     }
                 }
             }
@@ -388,13 +1146,64 @@
             requestAnimationFrame(loop);
             const dt = Math.min(clock.getDelta(), 0.1);
             const now = clock.getElapsedTime();
-            if(isRunning) {
+            
+            if (isRagdoll) {
+                ragdollParts.forEach(part => {
+                    part.vel.y -= 150 * dt;
+                    part.pos.addScaledVector(part.vel, dt);
+
+                    part.mesh.position.copy(part.pos);
+                    part.mesh.rotation.x += part.rotVel.x * dt;
+                    part.mesh.rotation.y += part.rotVel.y * dt;
+                    part.mesh.rotation.z += part.rotVel.z * dt;
+
+                    if (part.pos.y < 1.0) {
+                        part.pos.y = 1.0;
+                        part.vel.set(0,0,0);
+                        part.rotVel.set(0,0,0);
+                    }
+                });
+
+                if (ragdollParts.length > 0) {
+                    const focusTarget = ragdollParts[1].pos; 
+                    camera.lookAt(focusTarget);
+                }
+            }
+            
+            if(isRunning && !isMenuOpen && !isRagdoll) {
                 let d = new THREE.Vector3();
+                
                 if(moveKeys.w) d.z -= 1; if(moveKeys.s) d.z += 1;
                 if(moveKeys.a) d.x -= 1; if(moveKeys.d) d.x += 1;
                 if (joystickVector.length() > 0) { d.x = joystickVector.x; d.z = joystickVector.y; }
 
+                // Flush Tap Tracking if Keyboard/Joystick Override Actions Fire
+                if (moveKeys.w || moveKeys.s || moveKeys.a || moveKeys.d || joystickVector.length() > 0) {
+                    tapTargetPos = null;
+                }
+
+                // Compute Path Translation Vector Mapping towards target position
+                if (currentMovementMode === 'tap' && tapTargetPos) {
+                    const diffX = tapTargetPos.x - playerPos.x;
+                    const diffZ = tapTargetPos.z - playerPos.z;
+                    const dist2D = Math.sqrt(diffX * diffX + diffZ * diffZ);
+                    if (dist2D > 0.5) {
+                        const worldDir = new THREE.Vector3(diffX, 0, diffZ).normalize();
+                        const localDir = worldDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -camYaw);
+                        d.x = localDir.x;
+                        d.z = localDir.z;
+                        
+                        if (isOnLadder) {
+                            if (tapTargetPos.y > playerPos.y + 0.5) playerPos.y += 11.2 * dt;
+                            else if (tapTargetPos.y < playerPos.y - 0.5) playerPos.y -= 11.2 * dt;
+                        }
+                    } else {
+                        tapTargetPos = null;
+                    }
+                }
+
                 const isFirstPerson = camDist <= FIRST_PERSON_DIST;
+
                 ladderRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 3, playerPos.z), new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), charGroup.rotation.y));
                 const lHits = ladderRay.intersectObjects(ladderObjs);
                 isOnLadder = (lHits.length > 0 && lHits[0].distance < 2.5);
@@ -403,6 +1212,7 @@
                     playerVel.y = 0;
                     if (moveKeys.w || joystickVector.y < -0.5) playerPos.y += 11.2 * dt;
                     if (moveKeys.s || joystickVector.y > 0.5) playerPos.y -= 11.2 * dt;
+                    isGrounded = false; lastGroundedTime = now;
                 } else { playerVel.y -= 196.2 * dt; }
 
                 if(d.length() > 0) {
@@ -410,40 +1220,36 @@
                     playerPos.x += d.x; playerPos.z += d.z;
                     const dist = Math.sqrt(playerPos.x**2 + playerPos.z**2);
                     if (dist > APOTHEM - 1.2) { playerPos.x *= (APOTHEM-1.2)/dist; playerPos.z *= (APOTHEM-1.2)/dist; }
-                    
-                    // --- SMOOTH ROTATION START ---
-                    const targetAngle = (isShiftLock || isFirstPerson) ? camYaw + Math.PI : Math.atan2(d.x, d.z);
-                    let angleDiff = targetAngle - charGroup.rotation.y;
-                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                    charGroup.rotation.y += angleDiff * Math.min(dt * 15, 1);
-                    // --- SMOOTH ROTATION END ---
-
-                    if(isGrounded || isOnLadder) {
-                        animTimer += dt * 14;
-                        pL_Arm.rotation.x = Math.sin(animTimer) * 0.78; pR_Arm.rotation.x = -Math.sin(animTimer) * 0.78;
-                        pL_Leg.rotation.x = -Math.sin(animTimer) * 0.78; pR_Leg.rotation.x = Math.sin(animTimer) * 0.78;
-                    }
-                } else {
-                    // Smooth turn when standing in Shift Lock
-                    if (isShiftLock || isFirstPerson) {
-                        let angleDiff = (camYaw + Math.PI) - charGroup.rotation.y;
+                    if (isShiftLock || isFirstPerson) { charGroup.rotation.y = camYaw + Math.PI; } 
+                    else {
+                        let targetRot = Math.atan2(d.x, d.z); let angleDiff = targetRot - charGroup.rotation.y;
                         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                        charGroup.rotation.y += angleDiff * Math.min(dt * 15, 1);
+                        charGroup.rotation.y += angleDiff * 0.15;
                     }
+                    if(isGrounded || isOnLadder) {
+                        animTimer += dt * 14; const sw = Math.sin(animTimer);
+                        pL_Arm.rotation.x = sw * 0.78; pR_Arm.rotation.x = -sw * 0.78;
+                        pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
+                    }
+                } else {
+                    if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
                     if(isGrounded) { pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85; }
                 }
 
                 if(!isGrounded && !isOnLadder) {
-                    pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2;
-                    pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
-                    pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2;
-                    pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
+                    pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
+                    pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
                 }
 
-                if(moveKeys.space && (now - lastGroundedTime < COYOTE_DURATION)) { playerVel.y = 62.6; isGrounded = false; lastGroundedTime = 0; }
+                if(moveKeys.space && (now - lastGroundedTime < COYOTE_DURATION)) { playerVel.y = 62.6; isGrounded = false; isOnLadder = false; lastGroundedTime = 0; }
                 playerPos.y += playerVel.y * dt;
+
+                if (playerVel.y > 0) {
+                    ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
+                    const cHHits = ceilingRay.intersectObjects(collisionObjs);
+                    if (cHHits.length > 0 && cHHits[0].distance < 0.9) playerVel.y = 0;
+                }
 
                 if(!isOnLadder) {
                     isGrounded = false;
@@ -462,16 +1268,25 @@
                 const headWorldPos = new THREE.Vector3(); charHead.getWorldPosition(headWorldPos);
                 let camOffset = (isShiftLock && !isFirstPerson) ? new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).multiplyScalar(1.75) : new THREE.Vector3();
                 const ideal = new THREE.Vector3(headWorldPos.x + camOffset.x + Math.sin(camYaw)*Math.cos(camPitch)*camDist, headWorldPos.y + camOffset.y + Math.sin(camPitch)*camDist, headWorldPos.z + Math.cos(camYaw)*Math.cos(camPitch)*camDist);
-                
                 cameraRay.set(headWorldPos, ideal.clone().sub(headWorldPos).normalize());
                 const wallHits = cameraRay.intersectObjects(collisionObjs);
                 camera.position.copy((wallHits.length > 0 && wallHits[0].distance < camDist) ? wallHits[0].point.add(cameraRay.ray.direction.clone().multiplyScalar(-1.2)) : ideal);
                 camera.lookAt(headWorldPos.clone().add(camOffset));
                 
                 let op = THREE.MathUtils.clamp((headWorldPos.distanceTo(camera.position) - 2) / 3, 0, 1);
-                charMaterials.forEach(m => { m.opacity = op; m.transparent = (op < 1); });
-                document.getElementById('height').innerText = Math.max(0, Math.floor(playerPos.y - 6.5));
+                if (headWorldPos.distanceTo(camera.position) < 1.0) op = 0; 
+                charMaterials.forEach(m => { m.opacity = op; m.transparent = (op < 1); m.needsUpdate = true; });
             }
+
+            // Animate and Fade out the 3D target ring indicator
+            if (tapMarkerMesh && tapMarkerMesh.visible) {
+                tapMarkerMesh.scale.addScalar(dt * 2.0);
+                tapMarkerMesh.material.opacity -= dt * 2.0;
+                if (tapMarkerMesh.material.opacity <= 0) {
+                    tapMarkerMesh.visible = false;
+                }
+            }
+
             renderer.render(scene, camera);
         }
         init();
