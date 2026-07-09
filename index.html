@@ -19,7 +19,7 @@
         /* Customizable Panning Background Image */
         #loading-bg {
             position: absolute; top: 0; left: -10%; width: 120%; height: 100%;
-            background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop'); /* Replace with desired image URL */
+            background-image: url('https://tr.rbxcdn.com/180DAY-30df204e4a0188e05ea2dcd225dab32d/768/432/Image/Webp/noFilter');
             background-size: cover; background-position: center; filter: blur(4px) brightness(0.6);
             animation: panBackground 8s ease-in-out infinite alternate; z-index: 1;
         }
@@ -34,7 +34,6 @@
             flex-direction: column; align-items: center; z-index: 2;
         }
 
-        /* Loading Screen Customizable Rounded Square Image styling */
         #loading-icon-wrap {
             width: 180px; height: 180px; 
             display: flex; justify-content: center; align-items: center;
@@ -43,17 +42,15 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
-        /* Stylized placeholder for the customizable rounded square */
         #loading-custom-square {
             width: 100%;
             height: 100%;
-            background-color: #ffffff; 
+            background-image: url('https://www.speedrun.com/static/game/4d79o7n1/cover.png?v=6958f52'); 
             background-size: cover;
             background-position: center;
             border-radius: 24px; 
         }
 
-        /* Lower Offset Backdrop Card Box Grid */
         #loading-card {
             width: 100%; height: 200px; background: rgba(25, 25, 25, 0.85);
             border-radius: 16px; margin-top: 50px; z-index: 3;
@@ -64,7 +61,6 @@
         #loading-title { color: #ffffff; font-size: 32px; font-weight: 700; margin: 0 0 4px 0; letter-spacing: 1px; }
         #loading-studio { color: #aaaaaa; font-size: 16px; font-weight: 400; margin: 0; }
 
-        /* Bottom Right Spinner Ring Element */
         #loading-spinner {
             position: absolute; bottom: 40px; right: 40px; width: 45px; height: 45px;
             border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #ffffff;
@@ -76,7 +72,16 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Top Left Icon Control */
+        /* Pause Button Logo Animation */
+        @keyframes spinGrow {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(360deg) scale(1.2); }
+        }
+        @keyframes spinShrink {
+            0% { transform: rotate(0deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
         #roblox-menu-btn {
             position: absolute; top: 20px; left: 20px;
             width: 50px; height: 50px;
@@ -87,7 +92,6 @@
         }
         #roblox-menu-btn svg { width: 36px; height: 36px; fill: #ffffff; }
 
-        /* Maximize Pause Menu Panel Dimensions & Animations */
         #pause-menu {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.9); opacity: 0;
@@ -104,12 +108,10 @@
             display: flex; transform: translate(-50%, -50%) scale(1); opacity: 1;
         }
 
-        /* Dashboard Internal Split Structure */
         .settings-workspace {
             display: flex; flex: 1; width: 100%; gap: 30px; overflow: hidden; margin-bottom: 20px;
         }
         
-        /* Sidebar Navigation Controls Layout */
         .settings-sidebar {
             width: 220px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 15px;
         }
@@ -118,12 +120,10 @@
         }
         .sidebar-divider { height: 1px; background: rgba(25, 25, 25, 0.15); margin: 4px 0; }
 
-        /* Active Settings Subpanels Views mapping to parameters */
         .settings-content { flex: 1; display: flex; flex-direction: column; gap: 20px; padding-top: 10px; overflow-y: auto; }
         .setting-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 5px; }
         .setting-label { font-size: 14px; color: #cccccc; font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Divided Segmented Slider Control Nodes styling */
         .volume-control-wrap { display: flex; align-items: center; gap: 12px; }
         .volume-adjust-btn {
             width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffffff; background: transparent;
@@ -132,11 +132,10 @@
         }
         .volume-adjust-btn:active { transform: scale(0.9); }
         .volume-bar-container { display: flex; gap: 4px; width: 180px; height: 16px; }
-        .volume-segment { flex: 1; height: 100%; border-radius: 2px; transition: background-color 0.1s; }
+        .volume-segment { flex: 1; height: 100%; border-radius: 2px; transition: background-color 0.1s; cursor: pointer; }
         .segment-active { background-color: #ffffff; }
         .segment-inactive { background-color: #3d3d3d; }
 
-        /* Bottom Row Menu Row Configuration */
         .menu-btn-container { display: flex; justify-content: space-between; width: 100%; gap: 15px; }
         .menu-row-btn {
             flex: 1; height: 54px; font-size: 16px; font-weight: bold; font-family: 'Open Sans', sans-serif;
@@ -149,7 +148,6 @@
         .btn-blue { background: #0077ff; }
         .btn-blue:hover { background: #0066dd; }
         
-        /* Keyboard Keycaps */
         .keycap {
             background: #222; border: 1px solid #555; border-radius: 6px;
             padding: 2px 8px; font-size: 11px; font-family: monospace;
@@ -157,7 +155,6 @@
         }
         .desktop-shortcut { display: none; }
 
-        /* Confirmation Panels Base Layers */
         .confirmation-panel {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 15, 15, 0.95);
@@ -179,11 +176,11 @@
             transition: opacity 0.1s ease-out;
         }
 
-        /* Mobile Controls */
         #mobile-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; display: none; }
         #joystick-container { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(40, 40, 40, 0.5); border: 2px solid #999; border-radius: 50%; pointer-events: auto; }
         #joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: #aaa; border-radius: 50%; transform: translate(-50%, -50%); }
-        #jump-button { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; background: rgba(40, 40, 40, 0.5); border: 2px solid #999; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; }
+        #jump-button { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; background: rgba(40, 40, 40, 0.5); border: 2px solid #999; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; transition: background 0.1s, border-color 0.1s; }
+        #jump-button.active { background: rgba(0, 119, 255, 0.5); border-color: #0077ff; }
         #jump-button::after { content: ''; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 25px solid #999; }
         #mobile-shiftlock { position: absolute; bottom: 180px; right: 65px; width: 70px; height: 70px; background: rgba(0, 0, 0, 0.5); border: 4px solid #ffffff; border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; transition: border-color 0.1s, background-color 0.1s; }
         #mobile-shiftlock.active { border-color: #0077ff; background: rgba(0, 119, 255, 0.3); }
@@ -193,7 +190,6 @@
         .lock-body { width: 24px; height: 16px; background: #ffffff; border-radius: 3px; position: absolute; bottom: 0; left: 0; }
         #mobile-shiftlock.active .lock-body { background: #0077ff; }
 
-        /* Selection Dropdown Style Overrides */
         #movement-mode-select, #graphics-mode-select {
             background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 12px;
             border-radius: 8px; font-family: 'Open Sans', sans-serif; font-size: 14px;
@@ -373,7 +369,6 @@
 
         let ambientLight, sun;
 
-        // Default Settings Variables
         let audioVolume = 8;
         let audioCtx = null;
         let currentMovementMode = 'keyboard';
@@ -405,30 +400,26 @@
         
         let currentInputMode = 'pc';
         const isDesktopUA = /Win|Mac|Linux/i.test(navigator.userAgent);
-        if (isMobile && !isDesktopUA) {
-            currentInputMode = 'mobile';
-        }
-        if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0) {
-            currentInputMode = 'mobile';
-        }
+        if (isMobile && !isDesktopUA) currentInputMode = 'mobile';
+        if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0) currentInputMode = 'mobile';
 
-        // --- Local Storage Load ---
+        // Climbing State Variables
+        let isCurrentlyClimbing = false;
+        let currentClimbDir = new THREE.Vector3(0, 0, 1);
+        let walkSoundTimer = 0.3;
+        let climbSoundTimer = 0.4;
+
         function loadSettings() {
             const savedAudio = localStorage.getItem('toh_audio');
             if (savedAudio !== null) audioVolume = parseInt(savedAudio);
-            
             const savedGfxMode = localStorage.getItem('toh_gfxMode');
             if (savedGfxMode !== null) currentGraphicsMode = savedGfxMode;
-            
             const savedGfxQual = localStorage.getItem('toh_gfxQual');
             if (savedGfxQual !== null) graphicsQuality = parseInt(savedGfxQual);
-            
             const savedSens = localStorage.getItem('toh_camSens');
             if (savedSens !== null) cameraSensitivityBars = parseInt(savedSens);
-            
             const savedShiftLock = localStorage.getItem('toh_shiftLockEnabled');
             if (savedShiftLock !== null) isShiftLockEnabled = (savedShiftLock === 'true');
-            
             const savedMoveMode = localStorage.getItem('toh_moveMode');
             if (savedMoveMode !== null) currentMovementMode = savedMoveMode;
         }
@@ -437,12 +428,10 @@
             if (currentInputMode === 'pc') return;
             currentInputMode = 'pc';
             document.getElementById('mobile-controls').style.display = 'none';
-            
             joystickVector.set(0, 0);
             dynamicTouchId = null;
             joystickTouchId = null;
             trailCircles.forEach(c => c.style.display = 'none');
-            
             populateMovementModeDropdown();
             updateMovementModeUI();
         }
@@ -451,16 +440,13 @@
             if (currentInputMode === 'mobile') return;
             currentInputMode = 'mobile';
             document.getElementById('mobile-controls').style.display = 'block';
-            
             moveKeys = { w: false, a: false, s: false, d: false, space: false };
-            
             populateMovementModeDropdown();
             updateMovementModeUI();
         }
 
         function init() {
-            loadSettings(); // Load before setting up UI
-            
+            loadSettings();
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x88ccff);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
@@ -472,7 +458,6 @@
 
             ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambientLight);
-            
             sun = new THREE.DirectionalLight(0xffffff, 1.0);
             sun.position.set(50, 200, 50);
             scene.add(sun);
@@ -486,18 +471,13 @@
             buildCameraInterface();
             createTrailCircles();
             
-            // Handles Simulated Minimum 2-Second Auto-loading Sequence
             setTimeout(() => {
-                if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 checkPointerLockNeeds();
-                
                 const loader = document.getElementById('loading-screen');
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 500);
-
-                if (currentInputMode === 'mobile') {
-                    document.getElementById('mobile-controls').style.display = 'block';
-                }
+                if (currentInputMode === 'mobile') document.getElementById('mobile-controls').style.display = 'block';
                 updateMovementModeUI();
                 isRunning = true;
             }, 2000);
@@ -509,10 +489,9 @@
             });
 
             document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement !== renderer.domElement && !isMobile && isRunning && !isMenuOpen) {
-                    if (isShiftLock || camDist <= FIRST_PERSON_DIST) {
-                        openPauseMenu();
-                    }
+                // Removed !isMobile check to allow pointer lock on touch laptops
+                if (document.pointerLockElement !== renderer.domElement && isRunning && !isMenuOpen) {
+                    if (isShiftLock || camDist <= FIRST_PERSON_DIST) openPauseMenu();
                 }
             });
 
@@ -521,22 +500,18 @@
                     switchToPCControls();
                     return; 
                 }
-
                 if (!isRunning && !isMenuOpen) return;
                 const key = e.key.toLowerCase();
-                
                 if (e.key === 'Escape') {
                     e.preventDefault();
                     if (isMenuOpen) closePauseMenu(); else openPauseMenu();
                     return;
                 }
-
                 if (isMenuOpen) {
                     if (key === 'l') triggerLeaveSequence();
                     if (key === 'r') triggerRespawnSequence();
                     return;
                 }
-
                 if(key in moveKeys) moveKeys[key] = true; 
                 if(e.code==='Space') moveKeys.space=true; 
                 if(e.key === 'Shift') {
@@ -558,16 +533,10 @@
             });
 
             window.addEventListener('mousedown', (e) => {
-                if (e.button === 2) {
-                    isRightMouseDown = true;
-                    checkPointerLockNeeds();
-                }
+                if (e.button === 2) { isRightMouseDown = true; checkPointerLockNeeds(); }
             });
             window.addEventListener('mouseup', (e) => {
-                if (e.button === 2) {
-                    isRightMouseDown = false;
-                    checkPointerLockNeeds();
-                }
+                if (e.button === 2) { isRightMouseDown = false; checkPointerLockNeeds(); }
             });
             window.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -589,9 +558,7 @@
                         return; 
                     }
                 }
-
                 if (!isRunning || isMenuOpen) return;
-
                 const joyRect = document.getElementById('joystick-container').getBoundingClientRect();
                 const jumpRect = document.getElementById('jump-button').getBoundingClientRect();
                 const lockRect = document.getElementById('mobile-shiftlock').getBoundingClientRect();
@@ -600,20 +567,14 @@
 
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     const t = e.changedTouches[i];
-
                     const isInsideJoystick = (currentMovementMode === 'classic' && t.clientX >= joyRect.left && t.clientX <= joyRect.right && t.clientY >= joyRect.top && t.clientY <= joyRect.bottom);
                     const isInsideDynamicZone = (currentMovementMode === 'dynamic' && t.clientX >= dZoneRect.left && t.clientX <= dZoneRect.right && t.clientY >= dZoneRect.top && t.clientY <= dZoneRect.bottom);
                     const isInsideJump = (t.clientX >= jumpRect.left && t.clientX <= jumpRect.right && t.clientY >= jumpRect.top && t.clientY <= jumpRect.bottom);
                     const isInsideLock = (t.clientX >= lockRect.left && t.clientX <= lockRect.right && t.clientY >= lockRect.top && t.clientY <= lockRect.bottom);
                     const isInsideTopMenu = (t.clientX >= topMenuRect.left && t.clientX <= topMenuRect.right && t.clientY >= topMenuRect.top && t.clientY <= topMenuRect.bottom);
-
                     if (isInsideJoystick || isInsideDynamicZone || isInsideJump || isInsideLock || isInsideTopMenu) continue; 
-
-                    if (cameraTouches.length < 2) {
-                        cameraTouches.push({ id: t.identifier, lastX: t.clientX, lastY: t.clientY });
-                    }
+                    if (cameraTouches.length < 2) cameraTouches.push({ id: t.identifier, lastX: t.clientX, lastY: t.clientY });
                 }
-
                 if (cameraTouches.length === 2) {
                     let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
                     let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
@@ -626,7 +587,6 @@
 
             document.addEventListener('touchmove', (e) => {
                 if (!isRunning || isMenuOpen) return;
-
                 if (cameraTouches.length === 2 && initialPinchDist !== null) {
                     let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
                     let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
@@ -639,7 +599,6 @@
                     }
                     return;
                 }
-
                 if (cameraTouches.length === 1) {
                     let t = findCameraTouch(cameraTouches[0].id, e.touches);
                     let cache = cameraTouches[0];
@@ -673,7 +632,6 @@
                 if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
                 const target = e.target;
                 if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock')) return;
-                
                 const touch = e.changedTouches[0];
                 const mouse = new THREE.Vector2((touch.clientX / window.innerWidth) * 2 - 1, -(touch.clientY / window.innerHeight) * 2 + 1);
                 const raycaster = new THREE.Raycaster();
@@ -689,7 +647,6 @@
                 if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning || e.button !== 0) return;
                 const target = e.target;
                 if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu')) return;
-                
                 const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
                 const raycaster = new THREE.Raycaster();
                 raycaster.setFromCamera(mouse, camera);
@@ -711,6 +668,11 @@
                 const el = document.createElement('div');
                 el.className = 'volume-segment';
                 el.id = `vol-seg-${i}`;
+                el.addEventListener('click', () => {
+                    audioVolume = i;
+                    updateVolumeVisuals();
+                    localStorage.setItem('toh_audio', audioVolume);
+                });
                 container.appendChild(el);
             }
             updateVolumeVisuals();
@@ -720,11 +682,8 @@
             for(let i=1; i<=10; i++) {
                 const el = document.getElementById(`vol-seg-${i}`);
                 if(el) {
-                    if(i <= audioVolume) {
-                        el.className = 'volume-segment segment-active';
-                    } else {
-                        el.className = 'volume-segment segment-inactive';
-                    }
+                    if(i <= audioVolume) el.className = 'volume-segment segment-active';
+                    else el.className = 'volume-segment segment-inactive';
                 }
             }
         }
@@ -736,9 +695,15 @@
                 const el = document.createElement('div');
                 el.className = 'volume-segment';
                 el.id = `gfx-seg-${i}`;
+                el.addEventListener('click', () => {
+                    if (currentGraphicsMode === 'manual') {
+                        graphicsQuality = i;
+                        updateGraphicsVisuals();
+                        localStorage.setItem('toh_gfxQual', graphicsQuality);
+                    }
+                });
                 container.appendChild(el);
             }
-            
             document.getElementById('graphics-mode-select').value = currentGraphicsMode;
             updateGraphicsVisuals();
         }
@@ -754,40 +719,29 @@
         function updateGraphicsVisuals() {
             const isAuto = (currentGraphicsMode === 'auto');
             const targetLevel = isAuto ? getAutoGraphicsLevel() : graphicsQuality;
-
             for(let i=1; i<=10; i++) {
                 const el = document.getElementById(`gfx-seg-${i}`);
                 if(el) {
-                    if(!isAuto && i <= targetLevel) {
-                        el.className = 'volume-segment segment-active';
-                    } else {
-                        el.className = 'volume-segment segment-inactive';
-                    }
+                    if(!isAuto && i <= targetLevel) el.className = 'volume-segment segment-active';
+                    else el.className = 'volume-segment segment-inactive';
                 }
             }
-
             const minusBtn = document.getElementById('gfx-minus');
             const plusBtn = document.getElementById('gfx-plus');
             if (minusBtn && plusBtn) {
                 if (isAuto) {
-                    minusBtn.style.opacity = '0.25';
-                    minusBtn.style.pointerEvents = 'none';
-                    plusBtn.style.opacity = '0.25';
-                    plusBtn.style.pointerEvents = 'none';
+                    minusBtn.style.opacity = '0.25'; minusBtn.style.pointerEvents = 'none';
+                    plusBtn.style.opacity = '0.25'; plusBtn.style.pointerEvents = 'none';
                 } else {
-                    minusBtn.style.opacity = '1';
-                    minusBtn.style.pointerEvents = 'auto';
-                    plusBtn.style.opacity = '1';
-                    plusBtn.style.pointerEvents = 'auto';
+                    minusBtn.style.opacity = '1'; minusBtn.style.pointerEvents = 'auto';
+                    plusBtn.style.opacity = '1'; plusBtn.style.pointerEvents = 'auto';
                 }
             }
-
             applyRenderGraphicsSettings(targetLevel);
         }
 
         function applyRenderGraphicsSettings(level) {
             if (!renderer || !sun || !ambientLight) return;
-
             if (level === 1) {
                 sun.castShadow = false;
                 renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -795,46 +749,28 @@
                 sun.intensity = 1.0;
             } else {
                 sun.castShadow = true;
-                
                 let shadowSize = 512;
                 if (level >= 8) shadowSize = 2048;
                 else if (level >= 5) shadowSize = 1024;
-
                 sun.shadow.mapSize.width = shadowSize;
                 sun.shadow.mapSize.height = shadowSize;
-
                 const d = 150; 
-                sun.shadow.camera.left = -d;
-                sun.shadow.camera.right = d;
-                sun.shadow.camera.top = d;
-                sun.shadow.camera.bottom = -d;
-                sun.shadow.camera.near = 0.5;
-                sun.shadow.camera.far = 500; 
+                sun.shadow.camera.left = -d; sun.shadow.camera.right = d;
+                sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
+                sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 500; 
                 sun.shadow.bias = -0.0005;
-
-                if (level >= 7) {
-                    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                } else {
-                    renderer.shadowMap.type = THREE.PCFShadowMap;
-                }
-
+                if (level >= 7) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                else renderer.shadowMap.type = THREE.PCFShadowMap;
                 ambientLight.intensity = THREE.MathUtils.lerp(0.8, 0.5, (level - 1) / 9);
                 sun.intensity = THREE.MathUtils.lerp(1.0, 1.4, (level - 1) / 9);
             }
-
             scene.traverse((object) => {
                 if (object.isMesh) {
-                    if (level > 1) {
-                        object.castShadow = true;
-                        object.receiveShadow = true;
-                    } else {
-                        object.castShadow = false;
-                        object.receiveShadow = false;
-                    }
+                    if (level > 1) { object.castShadow = true; object.receiveShadow = true; }
+                    else { object.castShadow = false; object.receiveShadow = false; }
                     if (object.material) object.material.needsUpdate = true;
                 }
             });
-            
             renderer.shadowMap.needsUpdate = true;
         }
 
@@ -845,59 +781,98 @@
                 const el = document.createElement('div');
                 el.className = 'volume-segment';
                 el.id = `cam-seg-${i}`;
+                el.addEventListener('click', () => {
+                    cameraSensitivityBars = i;
+                    updateCameraSensitivityValue();
+                    localStorage.setItem('toh_camSens', cameraSensitivityBars);
+                });
                 container.appendChild(el);
             }
             updateCameraSensitivityValue();
         }
 
         function updateCameraSensitivityValue() {
-            if (cameraSensitivityBars === 5) {
-                cameraSensitivityValue = 1;
-            } else if (cameraSensitivityBars < 5) {
-                cameraSensitivityValue = 1 - (5 - cameraSensitivityBars) * 0.16;
-            } else {
-                cameraSensitivityValue = 1 + (cameraSensitivityBars - 5) * 0.6;
-            }
-
+            if (cameraSensitivityBars === 5) cameraSensitivityValue = 1;
+            else if (cameraSensitivityBars < 5) cameraSensitivityValue = 1 - (5 - cameraSensitivityBars) * 0.16;
+            else cameraSensitivityValue = 1 + (cameraSensitivityBars - 5) * 0.6;
             cameraSensitivityValue = Math.round(cameraSensitivityValue * 100) / 100;
-
             const display = document.getElementById('cam-value-display');
             if (display) display.innerText = cameraSensitivityValue;
-
             for(let i=1; i<=10; i++) {
                 const el = document.getElementById(`cam-seg-${i}`);
                 if(el) {
-                    if(i <= cameraSensitivityBars) {
-                        el.className = 'volume-segment segment-active';
-                    } else {
-                        el.className = 'volume-segment segment-inactive';
-                    }
+                    if(i <= cameraSensitivityBars) el.className = 'volume-segment segment-active';
+                    else el.className = 'volume-segment segment-inactive';
                 }
             }
         }
 
         function playOofSound() {
-            if (!audioCtx) return;
-            const dynamicGainValue = (audioVolume / 10) * 0.4;
-            if (dynamicGainValue <= 0) return;
-
+            if (!audioCtx || audioVolume <= 0) return;
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-
             osc.type = 'triangle';
-            
-            const startTime = audioCtx.currentTime;
-            osc.frequency.setValueAtTime(140, startTime);
-            osc.frequency.linearRampToValueAtTime(280, startTime + 0.12);
-
-            gainNode.gain.setValueAtTime(dynamicGainValue, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-
+            const t = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(140, t);
+            osc.frequency.linearRampToValueAtTime(280, t + 0.12);
+            const vol = (audioVolume / 10) * 0.4;
+            gainNode.gain.setValueAtTime(vol, t);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.36);
+        }
 
-            osc.start(startTime);
-            osc.stop(startTime + 0.36);
+        function playWalkSound() {
+            if (!audioCtx || audioVolume <= 0) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'square';
+            const t = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(120, t);
+            osc.frequency.exponentialRampToValueAtTime(60, t + 0.08);
+            const vol = (audioVolume / 10) * 0.2;
+            gainNode.gain.setValueAtTime(vol, t);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.1);
+        }
+
+        function playJumpSound() {
+            if (!audioCtx || audioVolume <= 0) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            const t = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(300, t);
+            osc.frequency.exponentialRampToValueAtTime(600, t + 0.15);
+            const vol = (audioVolume / 10) * 0.3;
+            gainNode.gain.setValueAtTime(vol, t);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.2);
+        }
+
+        function playClimbSound() {
+            if (!audioCtx || audioVolume <= 0) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'triangle';
+            const t = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(400, t);
+            osc.frequency.exponentialRampToValueAtTime(200, t + 0.05);
+            const vol = (audioVolume / 10) * 0.15;
+            gainNode.gain.setValueAtTime(vol, t);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.06);
         }
 
         function setupTabs() {
@@ -910,13 +885,8 @@
                             const h = document.getElementById(`heading-${t}`);
                             const s = document.getElementById(`section-${t}`);
                             if (h) {
-                                if (t === tab) {
-                                    h.style.color = '#ffffff';
-                                    h.style.background = 'rgba(255,255,255,0.1)';
-                                } else {
-                                    h.style.color = '#777777';
-                                    h.style.background = 'transparent';
-                                }
+                                if (t === tab) { h.style.color = '#ffffff'; h.style.background = 'rgba(255,255,255,0.1)'; }
+                                else { h.style.color = '#777777'; h.style.background = 'transparent'; }
                             }
                             if (s) s.style.display = (t === tab) ? 'block' : 'none';
                         });
@@ -933,27 +903,27 @@
                     <option value="dynamic">Dynamic Thumbstick</option>
                     <option value="tap">Tap to Move</option>
                 `;
-                if (!['classic', 'dynamic', 'tap'].includes(currentMovementMode)) {
-                    currentMovementMode = 'dynamic';
-                }
+                if (!['classic', 'dynamic', 'tap'].includes(currentMovementMode)) currentMovementMode = 'dynamic';
             } else {
                 movementSelect.innerHTML = `
                     <option value="keyboard">Keyboard + Mouse</option>
                     <option value="tap">Click to Move</option>
                 `;
-                if (!['keyboard', 'tap'].includes(currentMovementMode)) {
-                    currentMovementMode = 'keyboard';
-                }
+                if (!['keyboard', 'tap'].includes(currentMovementMode)) currentMovementMode = 'keyboard';
             }
             movementSelect.value = currentMovementMode;
             localStorage.setItem('toh_moveMode', currentMovementMode); 
         }
 
-        function setupMenuLogic() {
-            if(!isMobile) {
-                document.querySelectorAll('.desktop-shortcut').forEach(el => el.style.display = 'inline-block');
-            }
+        function animateMenuButton(isOpening) {
+            const svg = document.querySelector('#roblox-menu-btn svg');
+            svg.style.animation = 'none';
+            svg.offsetHeight; // trigger reflow
+            svg.style.animation = isOpening ? 'spinGrow 0.4s ease forwards' : 'spinShrink 0.4s ease forwards';
+        }
 
+        function setupMenuLogic() {
+            if(!isMobile) document.querySelectorAll('.desktop-shortcut').forEach(el => el.style.display = 'inline-block');
             populateMovementModeDropdown();
             document.getElementById('shiftlock-toggle').innerText = isShiftLockEnabled ? 'On' : 'Off';
 
@@ -1002,7 +972,6 @@
                 isShiftLockEnabled = !isShiftLockEnabled;
                 document.getElementById('shiftlock-toggle').innerText = isShiftLockEnabled ? 'On' : 'Off';
                 localStorage.setItem('toh_shiftLockEnabled', isShiftLockEnabled);
-                
                 if (!isShiftLockEnabled) {
                     isShiftLock = false;
                     const mobBtn = document.getElementById('mobile-shiftlock');
@@ -1017,9 +986,7 @@
                 document.getElementById('leave-confirmation-panel').style.display = 'none';
                 document.getElementById('pause-menu').classList.add('open');
             });
-            document.getElementById('confirm-leave-yes').addEventListener('click', () => {
-                window.location.href = "https://www.roblox.com";
-            });
+            document.getElementById('confirm-leave-yes').addEventListener('click', () => window.location.href = "https://www.roblox.com");
 
             document.getElementById('confirm-respawn-no').addEventListener('click', () => {
                 document.getElementById('respawn-confirmation-panel').style.display = 'none';
@@ -1031,31 +998,25 @@
         function openPauseMenu() {
             if (isRagdoll || !isRunning) return;
             isMenuOpen = true;
-            
             const menu = document.getElementById('pause-menu');
             menu.style.display = 'flex';
             setTimeout(() => menu.classList.add('open'), 10);
-
             if(document.pointerLockElement === renderer.domElement) document.exitPointerLock();
             Object.keys(moveKeys).forEach(k => moveKeys[k] = false);
             joystickVector.set(0, 0);
-            
             updateGraphicsVisuals();
+            animateMenuButton(true);
         }
 
         function closePauseMenu() {
             isMenuOpen = false;
             const menu = document.getElementById('pause-menu');
             menu.classList.remove('open');
-            
             document.getElementById('leave-confirmation-panel').style.display = 'none';
             document.getElementById('respawn-confirmation-panel').style.display = 'none';
-            
-            setTimeout(() => {
-                if(!isMenuOpen) menu.style.display = 'none';
-            }, 250);
-            
+            setTimeout(() => { if(!isMenuOpen) menu.style.display = 'none'; }, 250);
             checkPointerLockNeeds();
+            animateMenuButton(false);
         }
 
         function triggerLeaveSequence() {
@@ -1078,9 +1039,7 @@
             closePauseMenu();
             if (isRagdoll) return;
             isRagdoll = true;
-
             playOofSound();
-
             const df = document.getElementById('damage-flash');
             df.style.opacity = '1';
             setTimeout(() => { df.style.opacity = '0'; }, 200);
@@ -1095,25 +1054,14 @@
             ];
 
             ragdollParts = [];
-
             partsToBreak.forEach(item => {
                 const worldPos = new THREE.Vector3();
                 item.obj.getWorldPosition(worldPos);
                 scene.attach(item.obj);
-
                 ragdollParts.push({
-                    mesh: item.obj,
-                    pos: worldPos,
-                    vel: new THREE.Vector3(
-                        (Math.random() - 0.5) * 15,
-                        Math.random() * 20 + 15,
-                        (Math.random() - 0.5) * 15
-                    ),
-                    rotVel: new THREE.Vector3(
-                        (Math.random() - 0.5) * 10,
-                        (Math.random() - 0.5) * 10,
-                        (Math.random() - 0.5) * 10
-                    )
+                    mesh: item.obj, pos: worldPos,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 15, Math.random() * 20 + 15, (Math.random() - 0.5) * 15),
+                    rotVel: new THREE.Vector3((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10)
                 });
             });
 
@@ -1124,12 +1072,9 @@
                 charGroup.add(pR_Arm); pR_Arm.position.set(1.55, 3.5, 0); pR_Arm.rotation.set(0,0,0);
                 charGroup.add(pL_Leg); pL_Leg.position.set(-0.55, 2, 0); pL_Leg.rotation.set(0,0,0);
                 charGroup.add(pR_Leg); pR_Leg.position.set(0.55, 2, 0); pR_Leg.rotation.set(0,0,0);
-
                 playerPos.set(OUTER_RADIUS - 8, 6.5, 0);
-                playerVel.set(0, 0, 0);
-                camYaw = 0; camPitch = 0;
+                playerVel.set(0, 0, 0); camYaw = 0; camPitch = 0;
                 isRagdoll = false;
-                
                 const currentLevel = (currentGraphicsMode === 'auto') ? getAutoGraphicsLevel() : graphicsQuality;
                 applyRenderGraphicsSettings(currentLevel);
             }, 3000);
@@ -1143,12 +1088,11 @@
         }
 
         function checkPointerLockNeeds() {
-            if (isMobile || isMenuOpen || isRagdoll || !isRunning) return;
+            // Removed isMobile check to fix touch screen laptops
+            if (isMenuOpen || isRagdoll || !isRunning) return;
             const isFirstPerson = camDist <= FIRST_PERSON_DIST;
             if (isShiftLock || isFirstPerson) {
-                if (document.pointerLockElement !== renderer.domElement) {
-                    renderer.domElement.requestPointerLock();
-                }
+                if (document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock();
             } else if (!isRightMouseDown && document.pointerLockElement === renderer.domElement) {
                 document.exitPointerLock();
             }
@@ -1158,13 +1102,10 @@
             for (let i = 0; i < 5; i++) {
                 const circle = document.createElement('div');
                 circle.style.position = 'absolute';
-                circle.style.width = '12px';
-                circle.style.height = '12px';
+                circle.style.width = '12px'; circle.style.height = '12px';
                 circle.style.background = 'rgba(255, 255, 255, 0.6)';
-                circle.style.borderRadius = '50%';
-                circle.style.pointerEvents = 'none';
-                circle.style.display = 'none';
-                circle.style.zIndex = '27';
+                circle.style.borderRadius = '50%'; circle.style.pointerEvents = 'none';
+                circle.style.display = 'none'; circle.style.zIndex = '27';
                 circle.style.transform = 'translate(-50%, -50%)';
                 document.body.appendChild(circle);
                 trailCircles.push(circle);
@@ -1179,17 +1120,12 @@
             dynamicZone.style.opacity = '1';
             dynamicZone.offsetHeight; 
             dynamicZone.style.transition = 'opacity 1.5s ease';
-            setTimeout(() => {
-                if (currentMovementMode === 'dynamic') {
-                    dynamicZone.style.opacity = '0';
-                }
-            }, 1500);
+            setTimeout(() => { if (currentMovementMode === 'dynamic') dynamicZone.style.opacity = '0'; }, 1500);
         }
 
         function updateMovementModeUI() {
             const classicJoystick = document.getElementById('joystick-container');
             const dynamicZone = document.getElementById('dynamic-joystick-zone');
-            
             if (currentMovementMode === 'classic') {
                 if (classicJoystick) classicJoystick.style.display = 'block';
                 if (dynamicZone) dynamicZone.style.display = 'none';
@@ -1223,38 +1159,26 @@
             const knob = document.getElementById('joystick-knob');
             const jumpBtn = document.getElementById('jump-button');
 
-            if (isShiftLock) {
-                document.getElementById('mobile-shiftlock').classList.add('active');
-            } else {
-                document.getElementById('mobile-shiftlock').classList.remove('active');
-            }
+            if (isShiftLock) document.getElementById('mobile-shiftlock').classList.add('active');
+            else document.getElementById('mobile-shiftlock').classList.remove('active');
 
             const handleJoystick = (e) => {
                 e.preventDefault();
                 if (currentMovementMode !== 'classic' || isMenuOpen || isRagdoll || !isRunning) return;
-                if (joystickTouchId === null && e.type === 'touchstart') {
-                    joystickTouchId = e.changedTouches[0].identifier;
-                }
-                
+                if (joystickTouchId === null && e.type === 'touchstart') joystickTouchId = e.changedTouches[0].identifier;
                 let touch = null;
                 for (let i = 0; i < e.touches.length; i++) {
                     if (e.touches[i].identifier === joystickTouchId) touch = e.touches[i];
                 }
                 if (!touch) return;
-
                 const rect = joystick.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 const maxLen = rect.width / 2;
-
                 let dx = touch.clientX - centerX;
                 let dy = touch.clientY - centerY;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-
-                if (dist > maxLen) {
-                    dx *= maxLen / dist; dy *= maxLen / dist;
-                }
-
+                if (dist > maxLen) { dx *= maxLen / dist; dy *= maxLen / dist; }
                 knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
                 joystickVector.set(dx / maxLen, dy / maxLen);
             };
@@ -1283,40 +1207,29 @@
                     const touch = e.changedTouches[0];
                     dynamicTouchId = touch.identifier;
                     dynamicStartPos.set(touch.clientX, touch.clientY);
-                    
                     dynamicContainer.style.left = `${touch.clientX}px`;
                     dynamicContainer.style.top = `${touch.clientY}px`;
                     dynamicContainer.style.display = 'block';
-                    
-                    dynamicKnob.style.left = '50%';
-                    dynamicKnob.style.top = '50%';
+                    dynamicKnob.style.left = '50%'; dynamicKnob.style.top = '50%';
                 }
             }, { passive: false });
 
             dynamicZone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (currentMovementMode !== 'dynamic' || isMenuOpen || isRagdoll || !isRunning || dynamicTouchId === null) return;
-                
                 let touch = null;
                 for (let i = 0; i < e.touches.length; i++) {
                     if (e.touches[i].identifier === dynamicTouchId) touch = e.touches[i];
                 }
                 if (!touch) return;
-                
                 let dx = touch.clientX - dynamicStartPos.x;
                 let dy = touch.clientY - dynamicStartPos.y;
                 const maxLen = 50; 
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if (dist > maxLen) {
-                    dx *= maxLen / dist;
-                    dy *= maxLen / dist;
-                }
-                
+                if (dist > maxLen) { dx *= maxLen / dist; dy *= maxLen / dist; }
                 dynamicKnob.style.left = `calc(50% + ${dx}px)`;
                 dynamicKnob.style.top = `calc(50% + ${dy}px)`;
                 joystickVector.set(dx / maxLen, dy / maxLen);
-                
                 for (let i = 0; i < trailCircles.length; i++) {
                     const t = (i + 1) / (trailCircles.length + 1);
                     trailCircles[i].style.left = `${dynamicStartPos.x + dx * t}px`;
@@ -1339,13 +1252,22 @@
             dynamicZone.addEventListener('touchend', endDynamicTouch);
             dynamicZone.addEventListener('touchcancel', endDynamicTouch);
 
-            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (!isMenuOpen && !isRagdoll && isRunning) moveKeys.space = true; });
-            jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); moveKeys.space = false; });
+            jumpBtn.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                if (!isMenuOpen && !isRagdoll && isRunning) { 
+                    moveKeys.space = true; 
+                    jumpBtn.classList.add('active');
+                } 
+            });
+            jumpBtn.addEventListener('touchend', (e) => { 
+                e.preventDefault(); 
+                moveKeys.space = false; 
+                jumpBtn.classList.remove('active');
+            });
 
             document.getElementById('mobile-shiftlock').addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (isMenuOpen || isRagdoll || !isRunning || !isShiftLockEnabled) return;
-                
                 isShiftLock = !isShiftLock;
                 const mobBtn = document.getElementById('mobile-shiftlock');
                 if (isShiftLock) mobBtn.classList.add('active');
@@ -1473,9 +1395,8 @@
             }
         }
 
-        // --- Collision Helper Functions ---
         function hasWallCollision(pos, dir, objs) {
-            const yLevels = [pos.y - 1.5, pos.y - 3.5, pos.y - 5.4]; // 0.1 above feet to catch thin blocks
+            const yLevels = [pos.y - 1.5, pos.y - 3.5, pos.y - 5.4]; 
             const xOffset = dir.z * 0.5;
             const zOffset = dir.x * 0.5;
             const origins = [
@@ -1502,39 +1423,28 @@
                 rayOriginFeet.clone().add(perp),
                 rayOriginFeet.clone().sub(perp)
             ];
-            
             let highestStep = null;
-            
             for (let origin of origins) {
                 wallRay.set(origin, moveDir);
-                wallRay.far = 1.2; 
+                wallRay.far = 1.5; 
                 const hits = wallRay.intersectObjects(objs);
-                
                 if (hits.length > 0) {
                     const hitObj = hits[0].object;
                     const bb = new THREE.Box3().setFromObject(hitObj);
                     const topY = bb.max.y;
                     const stepHeight = topY - feetY;
-                    
                     if (stepHeight > -0.1 && stepHeight <= 2.1) {
-                        // Check if space above is clear
                         const clearRayOrigin = new THREE.Vector3(pPos.x, feetY + 2.2, pPos.z);
                         wallRay.set(clearRayOrigin, moveDir);
-                        wallRay.far = 1.2;
+                        wallRay.far = 1.5;
                         const clearHits = wallRay.intersectObjects(objs);
-                        
                         if (clearHits.length === 0) {
-                            if (highestStep === null || topY > highestStep) {
-                                highestStep = topY;
-                            }
+                            if (highestStep === null || topY > highestStep) highestStep = topY;
                         }
                     }
                 }
             }
-            
-            if (highestStep !== null) {
-                return highestStep + 5.5;
-            }
+            if (highestStep !== null) return highestStep + 5.5;
             return null;
         }
 
@@ -1547,19 +1457,16 @@
                 ragdollParts.forEach(part => {
                     part.vel.y -= 150 * dt;
                     part.pos.addScaledVector(part.vel, dt);
-
                     part.mesh.position.copy(part.pos);
                     part.mesh.rotation.x += part.rotVel.x * dt;
                     part.mesh.rotation.y += part.rotVel.y * dt;
                     part.mesh.rotation.z += part.rotVel.z * dt;
-
                     if (part.pos.y < 1.0) {
                         part.pos.y = 1.0;
                         part.vel.set(0,0,0);
                         part.rotVel.set(0,0,0);
                     }
                 });
-
                 if (ragdollParts.length > 0) {
                     const focusTarget = ragdollParts[1].pos; 
                     camera.lookAt(focusTarget);
@@ -1568,15 +1475,12 @@
             
             if(isRunning && !isMenuOpen && !isRagdoll) {
                 let d = new THREE.Vector3();
-                
                 if(moveKeys.w) d.z -= 1; if(moveKeys.s) d.z += 1;
                 if(moveKeys.a) d.x -= 1; if(moveKeys.d) d.x += 1;
                 if (joystickVector.length() > 0) { d.x = joystickVector.x; d.z = joystickVector.y; }
                 if (d.length() > 0) d.normalize();
 
-                if (moveKeys.w || moveKeys.s || moveKeys.a || moveKeys.d || joystickVector.length() > 0) {
-                    tapTargetPos = null;
-                }
+                if (moveKeys.w || moveKeys.s || moveKeys.a || moveKeys.d || joystickVector.length() > 0) tapTargetPos = null;
 
                 if ((currentMovementMode === 'tap' || currentMovementMode === 'click') && tapTargetPos) {
                     const diffX = tapTargetPos.x - playerPos.x;
@@ -1593,162 +1497,170 @@
                 }
 
                 const isFirstPerson = camDist <= FIRST_PERSON_DIST;
-                
                 let moveDir = d.clone().applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize();
                 let moveDelta = moveDir.clone().multiplyScalar(16 * dt);
 
-                // --- Climbing Detection ---
-                let isClimbing = false;
                 let climbTopY = 0;
-                const climbCheckDir = moveDir.length() > 0 ? moveDir : new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
-                
-                // Use multiple raycast heights to prevent falling off when passing 1-stud gaps (like on ladders)
-                const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
-                for (let y of yLevels) {
-                    const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
-                    wallRay.set(origin, climbCheckDir);
-                    wallRay.far = 1.2;
-                    const hits = wallRay.intersectObjects(collisionObjs);
-                    
-                    if (hits.length > 0) {
-                        const hitObj = hits[0].object;
-                        const bb = new THREE.Box3().setFromObject(hitObj);
-                        const topY = bb.max.y;
-                        const size = new THREE.Vector3(); bb.getSize(size);
-                        const minDim = Math.min(size.x, size.y, size.z);
-                        
-                        // Is it climbable? (Ladder or 0.1-2 studs thick)
-                        let isClimbable = ladderObjs.includes(hitObj);
-                        if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
-                        
-                        if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
-                            // Is the space above it blocked? If so, we must climb (don't climb if we can just step over it)
-                            const originStep = new THREE.Vector3(playerPos.x, playerPos.y - 3.3, playerPos.z);
-                            wallRay.set(originStep, climbCheckDir);
-                            wallRay.far = 1.2;
-                            const hitsStep = wallRay.intersectObjects(collisionObjs);
-                            
-                            if (hitsStep.length > 0) {
-                                isClimbing = true;
-                                climbTopY = topY;
-                                charGroup.rotation.y = Math.atan2(climbCheckDir.x, climbCheckDir.z);
-                                break; // Found a climbable surface
-                            }
-                        }
-                    }
-                }
-
                 let isWalking = false;
 
-                if (isClimbing) {
-                    // Ledge Climb Logic: If near the top, step over it
-                    if (playerPos.y - 5.5 >= climbTopY - 0.5) {
-                        playerPos.y = climbTopY + 5.5;
-                        if (moveKeys.w || moveKeys.a || moveKeys.d || moveKeys.s || joystickVector.length() > 0) {
-                            playerPos.x += moveDelta.x;
-                            playerPos.z += moveDelta.z;
+                if (isCurrentlyClimbing) {
+                    let stillClimbing = false;
+                    const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
+                    for (let y of yLevels) {
+                        const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
+                        wallRay.set(origin, currentClimbDir);
+                        wallRay.far = 1.2;
+                        const hits = wallRay.intersectObjects(collisionObjs);
+                        if (hits.length > 0) {
+                            const hitObj = hits[0].object;
+                            const bb = new THREE.Box3().setFromObject(hitObj);
+                            const topY = bb.max.y;
+                            const size = new THREE.Vector3(); bb.getSize(size);
+                            const minDim = Math.min(size.x, size.y, size.z);
+                            let isClimbable = ladderObjs.includes(hitObj);
+                            if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
+                            if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
+                                stillClimbing = true;
+                                climbTopY = topY;
+                                break;
+                            }
                         }
-                        isClimbing = false;
-                        isWalking = true;
+                    }
+                    isCurrentlyClimbing = stillClimbing;
+                    
+                    if (isCurrentlyClimbing) {
+                        if (playerPos.y - 5.5 >= climbTopY - 0.5) {
+                            playerPos.y = climbTopY + 5.5;
+                            if (moveKeys.w || moveKeys.a || moveKeys.d || moveKeys.s || joystickVector.length() > 0) {
+                                playerPos.x += moveDelta.x;
+                                playerPos.z += moveDelta.z;
+                            }
+                            isCurrentlyClimbing = false;
+                            isWalking = true;
+                        } else {
+                            playerVel.set(0, 0, 0);
+                            let upDir = 1;
+                            if (camPitch < -0.5) upDir = -1;
+                            
+                            let climbDelta = 0;
+                            if (moveKeys.w || moveKeys.a || moveKeys.d) climbDelta += 11.2 * dt * upDir;
+                            if (moveKeys.s) climbDelta -= 11.2 * dt * upDir;
+                            if (joystickVector.y < -0.5) climbDelta += 11.2 * dt * upDir;
+                            if (joystickVector.y > 0.5) climbDelta -= 11.2 * dt * upDir;
+                            
+                            if (climbDelta > 0) {
+                                ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
+                                const cHHits = ceilingRay.intersectObjects(collisionObjs);
+                                if (cHHits.length > 0 && cHHits[0].distance < 0.9) climbDelta = 0;
+                            }
+                            
+                            if (climbDelta !== 0) {
+                                animTimer += dt * 6;
+                                climbSoundTimer += dt;
+                                if (climbSoundTimer > 0.4) {
+                                    playClimbSound();
+                                    climbSoundTimer = 0;
+                                }
+                            }
+                            
+                            playerPos.y += climbDelta;
+                            isGrounded = false; lastGroundedTime = now;
+                            moveDelta.set(0, 0, 0);
+                        }
                     } else {
-                        playerVel.set(0, 0, 0); // Stop all velocity so they don't fall
-                        let climbDir = 1;
-                        // If looking down, W/A/D makes you go down, S makes you go up
-                        if (camPitch < -0.5) climbDir = -1;
-                        
-                        let climbDelta = 0;
-                        if (moveKeys.w || moveKeys.a || moveKeys.d) climbDelta += 11.2 * dt * climbDir;
-                        if (moveKeys.s) climbDelta -= 11.2 * dt * climbDir;
-                        if (joystickVector.y < -0.5) climbDelta += 11.2 * dt * climbDir;
-                        if (joystickVector.y > 0.5) climbDelta -= 11.2 * dt * climbDir;
-                        
-                        // Prevent climbing through ceilings
-                        if (climbDelta > 0) {
-                            ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
-                            const cHHits = ceilingRay.intersectObjects(collisionObjs);
-                            if (cHHits.length > 0 && cHHits[0].distance < 0.9) climbDelta = 0;
-                        }
-                        
-                        // Only animate if actually moving
-                        if (climbDelta !== 0) {
-                            animTimer += dt * 6;
-                        }
-                        
-                        playerPos.y += climbDelta;
-                        isGrounded = false; lastGroundedTime = now;
-                        moveDelta.set(0, 0, 0); // Prevent horizontal movement while climbing
+                        playerVel.y -= 196.2 * dt;
                     }
                 } else {
-                    playerVel.y -= 196.2 * dt;
-                    
-                    // --- Movement with Side Collision & Auto-Stepping ---
-                    if (moveDelta.x !== 0) {
-                        let dirX = new THREE.Vector3(Math.sign(moveDelta.x), 0, 0);
-                        if (!hasWallCollision(new THREE.Vector3(playerPos.x + moveDelta.x, playerPos.y, playerPos.z), dirX, collisionObjs)) {
-                            playerPos.x += moveDelta.x;
-                            isWalking = true;
-                        } else {
-                            let stepY = tryStepUp(playerPos, dirX, collisionObjs);
-                            if (stepY !== null) {
-                                playerPos.y = stepY;
-                                playerPos.x += moveDelta.x;
-                                isWalking = true;
+                    const climbCheckDir = moveDir.length() > 0 ? moveDir : new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
+                    const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
+                    for (let y of yLevels) {
+                        const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
+                        wallRay.set(origin, climbCheckDir);
+                        wallRay.far = 1.2;
+                        const hits = wallRay.intersectObjects(collisionObjs);
+                        if (hits.length > 0) {
+                            const hitObj = hits[0].object;
+                            const bb = new THREE.Box3().setFromObject(hitObj);
+                            const topY = bb.max.y;
+                            const size = new THREE.Vector3(); bb.getSize(size);
+                            const minDim = Math.min(size.x, size.y, size.z);
+                            let isClimbable = ladderObjs.includes(hitObj);
+                            if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
+                            if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
+                                const originStep = new THREE.Vector3(playerPos.x, playerPos.y - 3.3, playerPos.z);
+                                wallRay.set(originStep, climbCheckDir);
+                                wallRay.far = 1.2;
+                                const hitsStep = wallRay.intersectObjects(collisionObjs);
+                                if (hitsStep.length > 0) {
+                                    isCurrentlyClimbing = true;
+                                    currentClimbDir.copy(climbCheckDir);
+                                    break;
+                                }
                             }
                         }
                     }
                     
-                    if (moveDelta.z !== 0) {
-                        let dirZ = new THREE.Vector3(0, 0, Math.sign(moveDelta.z));
-                        if (!hasWallCollision(new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDelta.z), dirZ, collisionObjs)) {
-                            playerPos.z += moveDelta.z;
-                            isWalking = true;
-                        } else {
-                            let stepY = tryStepUp(playerPos, dirZ, collisionObjs);
-                            if (stepY !== null) {
-                                playerPos.y = stepY;
-                                playerPos.z += moveDelta.z;
-                                isWalking = true;
+                    if (!isCurrentlyClimbing) {
+                        playerVel.y -= 196.2 * dt;
+                        if (moveDelta.x !== 0) {
+                            let dirX = new THREE.Vector3(Math.sign(moveDelta.x), 0, 0);
+                            if (!hasWallCollision(new THREE.Vector3(playerPos.x + moveDelta.x, playerPos.y, playerPos.z), dirX, collisionObjs)) {
+                                playerPos.x += moveDelta.x; isWalking = true;
+                            } else {
+                                let stepY = tryStepUp(playerPos, dirX, collisionObjs);
+                                if (stepY !== null) { playerPos.y = stepY; playerPos.x += moveDelta.x; isWalking = true; }
                             }
                         }
-                    }
-                    
-                    if (isWalking) {
-                        if (isShiftLock || isFirstPerson) { 
-                            charGroup.rotation.y = camYaw + Math.PI; 
-                        } else {
-                            let targetRot = Math.atan2(moveDir.x, moveDir.z); 
-                            let angleDiff = targetRot - charGroup.rotation.y;
-                            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                            charGroup.rotation.y += angleDiff * 0.15;
+                        if (moveDelta.z !== 0) {
+                            let dirZ = new THREE.Vector3(0, 0, Math.sign(moveDelta.z));
+                            if (!hasWallCollision(new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDelta.z), dirZ, collisionObjs)) {
+                                playerPos.z += moveDelta.z; isWalking = true;
+                            } else {
+                                let stepY = tryStepUp(playerPos, dirZ, collisionObjs);
+                                if (stepY !== null) { playerPos.y = stepY; playerPos.z += moveDelta.z; isWalking = true; }
+                            }
                         }
-                    } else {
-                        if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
+                        if (isWalking) {
+                            walkSoundTimer += dt;
+                            if (walkSoundTimer > 0.3) {
+                                playWalkSound();
+                                walkSoundTimer = 0;
+                            }
+                            if (isShiftLock || isFirstPerson) { charGroup.rotation.y = camYaw + Math.PI; } 
+                            else {
+                                let targetRot = Math.atan2(moveDir.x, moveDir.z); 
+                                let angleDiff = targetRot - charGroup.rotation.y;
+                                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                                charGroup.rotation.y += angleDiff * 0.15;
+                            }
+                        } else {
+                            walkSoundTimer = 0.3;
+                            if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
+                        }
                     }
                 }
 
                 // --- Animation Update ---
-                if (isClimbing) {
-                    // Face the wall directly
-                    charGroup.rotation.y = Math.atan2(climbCheckDir.x, climbCheckDir.z);
-                    charTorso.position.z = -0.5; // 0.5 studs forward
-                    charHead.position.z = 0.5;   // 0.5 studs backward
-                    charHead.rotation.x = -15 * (Math.PI / 180); // Look up
-                    pL_Arm.rotation.x = -Math.PI / 2 + Math.sin(animTimer) * (Math.PI / 4); // Reach up
+                if (isCurrentlyClimbing) {
+                    charGroup.rotation.y = Math.atan2(currentClimbDir.x, currentClimbDir.z);
+                    charTorso.position.z = -0.5// Moved back 1 stud to original position
+                    charHead.position.z = -0.5; 
+                    charHead.rotation.x = -15 * (Math.PI / 180); 
+                    pL_Arm.rotation.x = -Math.PI / 2 + Math.sin(animTimer) * (Math.PI / 4); 
                     pR_Arm.rotation.x = -Math.PI / 2 - Math.sin(animTimer) * (Math.PI / 4);
                     pL_Arm.rotation.z = 5 * (Math.PI / 180);
                     pR_Arm.rotation.z = -5 * (Math.PI / 180);
-                    pL_Leg.position.x = -0.65; // 0.55 + 0.1
-                    pR_Leg.position.x = 0.65;  // 0.55 + 0.1
+                    pL_Leg.position.x = -0.65; 
+                    pR_Leg.position.x = 0.65;  
                     let legVal = Math.sin(animTimer);
                     let rightLegVal = Math.sin(animTimer + Math.PI);
-                    
                     if (legVal > 0) {
-                        pL_Leg.rotation.x = -15 * legVal * (Math.PI / 180); // Rotate backwards 15 deg
-                        pL_Leg.position.y = 2 + legVal * 1; // Move up 1 stud
-                        pL_Leg.position.z = -legVal * 1;   // Move forward 1 stud
+                        pL_Leg.rotation.x = -15 * legVal * (Math.PI / 180); 
+                        pL_Leg.position.y = 2 + legVal * 1; 
+                        pL_Leg.position.z = -legVal * 1;   
                     } else {
-                        pL_Leg.rotation.x = 5 * -legVal * (Math.PI / 180); // Rotate forward 5 deg
+                        pL_Leg.rotation.x = 5 * -legVal * (Math.PI / 180); 
                         pL_Leg.position.y = 2;
                         pL_Leg.position.z = 0;
                     }
@@ -1763,50 +1675,51 @@
                     }
                 } else {
                     charTorso.position.z = 0;
-                    charHead.position.z = 0; // Reset head position
+                    charHead.position.z = 0; 
                     charHead.rotation.x = 0;
                     pL_Arm.rotation.z = 0;
                     pR_Arm.rotation.z = 0;
                     pL_Leg.position.x = -0.55;
                     pR_Leg.position.x = 0.55;
-                    
                     if (playerVel.y > 0 || !isGrounded) {
                         pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
                         pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
                         pL_Leg.position.y = 2; pL_Leg.position.z = 0;
                         pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                        charTorso.rotation.y = 0;
                     } else if (isWalking) {
                         animTimer += dt * 14; const sw = Math.sin(animTimer);
                         pL_Arm.rotation.x = sw * 0.78; pR_Arm.rotation.x = -sw * 0.78;
                         pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
                         pL_Leg.position.y = 2; pL_Leg.position.z = 0;
                         pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                        // Torso twist: 2 degrees clockwise when left arm forward (sw > 0)
+                        charTorso.rotation.y = -sw * (2 * Math.PI / 180);
                     } else {
                         pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85;
                         pL_Leg.position.y = 2; pL_Leg.position.z = 0;
                         pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                        charTorso.rotation.y = 0;
                     }
                 }
 
                 // --- Jump Logic ---
                 if (moveKeys.space) {
-                    if (isClimbing) {
+                    if (isCurrentlyClimbing) {
                         playerVel.y = 62.6;
-                        const backDir = climbCheckDir.clone().negate();
-                        // Nudge off the ladder so they don't immediately re-grab
+                        const backDir = currentClimbDir.clone().negate();
                         playerPos.x += backDir.x * 2.0;
                         playerPos.z += backDir.z * 2.0;
-                        // Launch backward (13-16 studs)
                         playerVel.x = backDir.x * 25;
                         playerVel.z = backDir.z * 25;
-                        isClimbing = false;
+                        isCurrentlyClimbing = false;
                         lastGroundedTime = 0;
-                        moveKeys.space = false; // Consume jump
+                        playJumpSound();
                     } else if (now - lastGroundedTime < COYOTE_DURATION) {
                         playerVel.y = 62.6;
                         isGrounded = false;
                         lastGroundedTime = 0;
-                        moveKeys.space = false; // Consume jump
+                        playJumpSound();
                     }
                 }
 
@@ -1818,7 +1731,7 @@
                     if (cHHits.length > 0 && cHHits[0].distance < 0.9) playerVel.y = 0;
                 }
 
-                if(!isClimbing) {
+                if(!isCurrentlyClimbing) {
                     isGrounded = false;
                     floorRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 2, playerPos.z), new THREE.Vector3(0,-1,0));
                     const fHits = floorRay.intersectObjects(collisionObjs);
@@ -1848,9 +1761,7 @@
             if (tapMarkerMesh && tapMarkerMesh.visible) {
                 tapMarkerMesh.scale.addScalar(dt * 2.0);
                 tapMarkerMesh.material.opacity -= dt * 2.0;
-                if (tapMarkerMesh.material.opacity <= 0) {
-                    tapMarkerMesh.visible = false;
-                }
+                if (tapMarkerMesh.material.opacity <= 0) tapMarkerMesh.visible = false;
             }
 
             if (!isRunning && clock.getOldTime() === 0) {
@@ -1861,17 +1772,12 @@
                             if (THEME[part] !== undefined) THEME[part] = cloudAvatar[part];
                         });
                     }
-
-                    if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+                    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     checkPointerLockNeeds();
-                    
                     const loader = document.getElementById('loading-screen');
                     loader.style.opacity = '0';
                     setTimeout(() => loader.style.display = 'none', 500);
-
-                    if (currentInputMode === 'mobile') {
-                        document.getElementById('mobile-controls').style.display = 'block';
-                    }
+                    if (currentInputMode === 'mobile') document.getElementById('mobile-controls').style.display = 'block';
                     updateMovementModeUI();
                     isRunning = true;
                 }, 2000);
@@ -1881,9 +1787,6 @@
         }
         init();
 
-        /**
-         * Fetches avatar state from a remote server.
-         */
         async function loadAvatarFromCloud(userId = 'default_user') {
             try {
                 const response = await fetch(`https://roblox-devt.github.io/home/get-avatar?userId=${userId}`);
