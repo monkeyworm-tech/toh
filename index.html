@@ -510,6 +510,15 @@
                 if (isMenuOpen) {
                     if (key === 'l') triggerLeaveSequence();
                     if (key === 'r') triggerRespawnSequence();
+                    // Enter confirms the action if a confirmation panel is open
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (document.getElementById('leave-confirmation-panel').style.display === 'flex') {
+                            window.location.href = "https://www.roblox.com";
+                        } else if (document.getElementById('respawn-confirmation-panel').style.display === 'flex') {
+                            executeRagdollRespawn();
+                        }
+                    }
                     return;
                 }
                 if(key in moveKeys) moveKeys[key] = true; 
@@ -1612,7 +1621,7 @@
                             }
                         }
                         if (moveDelta.z !== 0) {
-                            let dirZ = new THREE.Vector3(0, 0, Math.sign(moveDelta.z));
+                            let dirZ = new THREE.Vector3(0,0, Math.sign(moveDelta.z));
                             if (!hasWallCollision(new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDelta.z), dirZ, collisionObjs)) {
                                 playerPos.z += moveDelta.z; isWalking = true;
                             } else {
