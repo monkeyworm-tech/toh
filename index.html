@@ -36,20 +36,21 @@
 
         /* Loading Screen Customizable Rounded Square Image styling */
         #loading-icon-wrap {
-            width: 100px; height: 100px; background: rgb(0, 0, 0); border-radius: 50%;
+            width: 180px; height: 180px; 
             display: flex; justify-content: center; align-items: center;
-            z-index: 4; position: absolute; top: 0;
+            z-index: 4; position: absolute; top: 50px; 
+            transform: translateY(-50%); 
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         
         /* Stylized placeholder for the customizable rounded square */
         #loading-custom-square {
-            width: 255px;
-            height: 255px;
-            background-color: #ffffff; /* Replace with background-image: url('YOUR_IMAGE_URL'); */
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff; 
             background-size: cover;
             background-position: center;
-            border-radius: 14px; /* Adjust sharpness of the rounded square corners here */
+            border-radius: 24px; 
         }
 
         /* Lower Offset Backdrop Card Box Grid */
@@ -118,8 +119,8 @@
         .sidebar-divider { height: 1px; background: rgba(25, 25, 25, 0.15); margin: 4px 0; }
 
         /* Active Settings Subpanels Views mapping to parameters */
-        .settings-content { flex: 1; display: flex; flex-direction: column; gap: 20px; padding-top: 10px; }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .settings-content { flex: 1; display: flex; flex-direction: column; gap: 20px; padding-top: 10px; overflow-y: auto; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 5px; }
         .setting-label { font-size: 14px; color: #cccccc; font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px; }
         
         /* Divided Segmented Slider Control Nodes styling */
@@ -127,7 +128,7 @@
         .volume-adjust-btn {
             width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffffff; background: transparent;
             color: #ffffff; font-size: 18px; font-weight: bold; cursor: pointer; display: flex;
-            justify-content: center; align-items: center; line-height: 0; transition: transform 0.1s;
+            justify-content: center; align-items: center; line-height: 0; transition: transform 0.1s, opacity 0.2s;
         }
         .volume-adjust-btn:active { transform: scale(0.9); }
         .volume-bar-container { display: flex; gap: 4px; width: 180px; height: 16px; }
@@ -192,13 +193,13 @@
         .lock-body { width: 24px; height: 16px; background: #ffffff; border-radius: 3px; position: absolute; bottom: 0; left: 0; }
         #mobile-shiftlock.active .lock-body { background: #0077ff; }
 
-        /* Movement Mode Select Style Override */
-        #movement-mode-select {
+        /* Selection Dropdown Style Overrides */
+        #movement-mode-select, #graphics-mode-select {
             background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 12px;
             border-radius: 8px; font-family: 'Open Sans', sans-serif; font-size: 14px;
             outline: none; cursor: pointer; transition: background 0.1s;
         }
-        #movement-mode-select:hover { background: #4a4a4a; }
+        #movement-mode-select:hover, #graphics-mode-select:hover { background: #4a4a4a; }
     </style>
 </head>
 <body>
@@ -250,19 +251,43 @@
 
                 <div id="section-graphics" style="display: none;">
                     <div class="setting-row">
+                        <span class="setting-label">Graphics Mode</span>
+                        <select id="graphics-mode-select">
+                            <option value="auto">Auto</option>
+                            <option value="manual">Manual</option>
+                        </select>
+                    </div>
+                    <div class="setting-row" style="margin-top: 10px;">
                         <span class="setting-label">Graphics Quality</span>
-                        <span style="color:#aaa; font-size:14px;">Auto</span>
+                        <div class="volume-control-wrap">
+                            <button id="gfx-minus" class="volume-adjust-btn">-</button>
+                            <div id="graphics-bars" class="volume-bar-container"></div>
+                            <button id="gfx-plus" class="volume-adjust-btn">+</button>
+                        </div>
                     </div>
                 </div>
 
                 <div id="section-controls" style="display: none;">
                     <div class="setting-row">
+                        <span class="setting-label">Camera Sensitivity</span>
+                        <div class="volume-control-wrap">
+                            <button id="cam-minus" class="volume-adjust-btn">-</button>
+                            <div id="camera-bars" class="volume-bar-container"></div>
+                            <button id="cam-plus" class="volume-adjust-btn">+</button>
+                            <span id="cam-value-display" style="color: #ffffff; width: 30px; text-align: center;">1</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
                         <span class="setting-label">Movement Mode</span>
                         <select id="movement-mode-select">
-                            <option value="classic">Classic Thumbstick</option>
-                            <option value="dynamic">Dynamic Thumbstick</option>
-                            <option value="tap">Tap to Move</option>
+                            <!-- Options injected via JS based on device -->
                         </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="setting-label">Shift Lock Switch</span>
+                        <div id="shiftlock-toggle" class="btn-outline" style="cursor: pointer; padding: 6px 24px; font-size: 14px; font-weight: 400; border-radius: 8px; font-family: 'Open Sans', sans-serif;">On</div>
                     </div>
                 </div>
             </div>
@@ -321,7 +346,8 @@
         let scene, camera, renderer, clock;
         let moveKeys = { w: false, a: false, s: false, d: false, space: false };
         let playerVel = new THREE.Vector3();
-        let isShiftLock = false, isOnLadder = false;
+        let isShiftLock = false; 
+        let isShiftLockEnabled = true; 
         let lastGroundedTime = 0;
         const COYOTE_DURATION = 0.2; 
 
@@ -345,10 +371,17 @@
         let isRagdoll = false;
         let ragdollParts = [];
 
-        // System Settings State Tracking Variables
-        let audioVolume = 8; // Steps 1 to 10
+        let ambientLight, sun;
+
+        // Default Settings Variables
+        let audioVolume = 8;
         let audioCtx = null;
-        let currentMovementMode = 'dynamic'; // 'classic', 'dynamic', 'tap'
+        let currentMovementMode = 'keyboard';
+        let currentGraphicsMode = 'auto';
+        let graphicsQuality = 6;
+        let cameraSensitivityBars = 5;
+        let cameraSensitivityValue = 1;
+        
         let dynamicTouchId = null;
         let dynamicStartPos = new THREE.Vector2();
         let trailCircles = [];
@@ -358,7 +391,7 @@
         const floorRay = new THREE.Raycaster();
         const ceilingRay = new THREE.Raycaster();
         const cameraRay = new THREE.Raycaster();
-        const ladderRay = new THREE.Raycaster();
+        const wallRay = new THREE.Raycaster();
 
         let joystickVector = new THREE.Vector2(0, 0);
         let joystickTouchId = null;
@@ -369,8 +402,65 @@
         let initialCamDist = null;
 
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
+        
+        let currentInputMode = 'pc';
+        const isDesktopUA = /Win|Mac|Linux/i.test(navigator.userAgent);
+        if (isMobile && !isDesktopUA) {
+            currentInputMode = 'mobile';
+        }
+        if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0) {
+            currentInputMode = 'mobile';
+        }
+
+        // --- Local Storage Load ---
+        function loadSettings() {
+            const savedAudio = localStorage.getItem('toh_audio');
+            if (savedAudio !== null) audioVolume = parseInt(savedAudio);
+            
+            const savedGfxMode = localStorage.getItem('toh_gfxMode');
+            if (savedGfxMode !== null) currentGraphicsMode = savedGfxMode;
+            
+            const savedGfxQual = localStorage.getItem('toh_gfxQual');
+            if (savedGfxQual !== null) graphicsQuality = parseInt(savedGfxQual);
+            
+            const savedSens = localStorage.getItem('toh_camSens');
+            if (savedSens !== null) cameraSensitivityBars = parseInt(savedSens);
+            
+            const savedShiftLock = localStorage.getItem('toh_shiftLockEnabled');
+            if (savedShiftLock !== null) isShiftLockEnabled = (savedShiftLock === 'true');
+            
+            const savedMoveMode = localStorage.getItem('toh_moveMode');
+            if (savedMoveMode !== null) currentMovementMode = savedMoveMode;
+        }
+
+        function switchToPCControls() {
+            if (currentInputMode === 'pc') return;
+            currentInputMode = 'pc';
+            document.getElementById('mobile-controls').style.display = 'none';
+            
+            joystickVector.set(0, 0);
+            dynamicTouchId = null;
+            joystickTouchId = null;
+            trailCircles.forEach(c => c.style.display = 'none');
+            
+            populateMovementModeDropdown();
+            updateMovementModeUI();
+        }
+
+        function switchToMobileControls() {
+            if (currentInputMode === 'mobile') return;
+            currentInputMode = 'mobile';
+            document.getElementById('mobile-controls').style.display = 'block';
+            
+            moveKeys = { w: false, a: false, s: false, d: false, space: false };
+            
+            populateMovementModeDropdown();
+            updateMovementModeUI();
+        }
 
         function init() {
+            loadSettings(); // Load before setting up UI
+            
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x88ccff);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
@@ -380,8 +470,10 @@
             renderer.shadowMap.enabled = true;
             document.body.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            
+            sun = new THREE.DirectionalLight(0xffffff, 1.0);
             sun.position.set(50, 200, 50);
             scene.add(sun);
 
@@ -390,6 +482,8 @@
             setupMobileControls();
             setupMenuLogic();
             buildVolumeInterface();
+            buildGraphicsInterface();
+            buildCameraInterface();
             createTrailCircles();
             
             // Handles Simulated Minimum 2-Second Auto-loading Sequence
@@ -401,7 +495,7 @@
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 500);
 
-                if (isMobile) {
+                if (currentInputMode === 'mobile') {
                     document.getElementById('mobile-controls').style.display = 'block';
                 }
                 updateMovementModeUI();
@@ -423,6 +517,11 @@
             });
 
             window.addEventListener('keydown', (e) => { 
+                if (isMobile && currentInputMode === 'mobile') {
+                    switchToPCControls();
+                    return; 
+                }
+
                 if (!isRunning && !isMenuOpen) return;
                 const key = e.key.toLowerCase();
                 
@@ -441,10 +540,13 @@
                 if(key in moveKeys) moveKeys[key] = true; 
                 if(e.code==='Space') moveKeys.space=true; 
                 if(e.key === 'Shift') {
+                    if (!isShiftLockEnabled) return;
                     isShiftLock = !isShiftLock;
                     const mobBtn = document.getElementById('mobile-shiftlock');
-                    if (isShiftLock) mobBtn.classList.add('active');
-                    else mobBtn.classList.remove('active');
+                    if (mobBtn) {
+                        if (isShiftLock) mobBtn.classList.add('active');
+                        else mobBtn.classList.remove('active');
+                    }
                     checkPointerLockNeeds();
                 }
             });
@@ -473,13 +575,21 @@
                 if (!isRunning || isMenuOpen) return;
                 const hasLock = document.pointerLockElement === renderer.domElement;
                 if (hasLock || isRightMouseDown) { 
-                    camYaw -= e.movementX * 0.003; 
-                    camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * 0.003, -1.5, 1.5);
+                    const sens = 0.003 * cameraSensitivityValue;
+                    camYaw -= e.movementX * sens; 
+                    camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * sens, -1.5, 1.5);
                 } 
             });
 
-            // Touch System Map Indexes
             document.addEventListener('touchstart', (e) => {
+                if (isMobile && currentInputMode === 'pc') {
+                    const target = e.target;
+                    if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle')) {
+                        switchToMobileControls();
+                        return; 
+                    }
+                }
+
                 if (!isRunning || isMenuOpen) return;
 
                 const joyRect = document.getElementById('joystick-container').getBoundingClientRect();
@@ -523,7 +633,9 @@
                     if (t1 && t2) {
                         const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
                         const factor = initialPinchDist / currentDist;
-                        camDist = THREE.MathUtils.clamp(initialCamDist * factor, 0.1, 80);
+                        const targetCamDist = initialCamDist * factor;
+                        const diff = targetCamDist - initialCamDist;
+                        camDist = THREE.MathUtils.clamp(initialCamDist + diff * 1.5, 0.1, 80);
                     }
                     return;
                 }
@@ -532,8 +644,9 @@
                     let t = findCameraTouch(cameraTouches[0].id, e.touches);
                     let cache = cameraTouches[0];
                     if (t) {
-                        camYaw -= (t.clientX - cache.lastX) * 0.006;
-                        camPitch = THREE.MathUtils.clamp(camPitch + (t.clientY - cache.lastY) * 0.006, -1.5, 1.5);
+                        const sens = 0.006 * cameraSensitivityValue;
+                        camYaw -= (t.clientX - cache.lastX) * sens;
+                        camPitch = THREE.MathUtils.clamp(camPitch + (t.clientY - cache.lastY) * sens, -1.5, 1.5);
                         cache.lastX = t.clientX; cache.lastY = t.clientY;
                     }
                 }
@@ -556,7 +669,6 @@
                 }
             }, { passive: true });
 
-            // Tap to Move Interceptors Setup
             window.addEventListener('touchstart', (e) => {
                 if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
                 const target = e.target;
@@ -592,7 +704,6 @@
             loop();
         }
 
-        // --- Dashboard Setup and Interface Injections ---
         function buildVolumeInterface() {
             const container = document.getElementById('volume-bars');
             container.innerHTML = '';
@@ -618,10 +729,155 @@
             }
         }
 
-        // Programmatic Synthesized "Oof" Sound Effect Generator
+        function buildGraphicsInterface() {
+            const container = document.getElementById('graphics-bars');
+            container.innerHTML = '';
+            for(let i=1; i<=10; i++) {
+                const el = document.createElement('div');
+                el.className = 'volume-segment';
+                el.id = `gfx-seg-${i}`;
+                container.appendChild(el);
+            }
+            
+            document.getElementById('graphics-mode-select').value = currentGraphicsMode;
+            updateGraphicsVisuals();
+        }
+
+        function getAutoGraphicsLevel() {
+            if (isMobile) return 3;
+            const cores = navigator.hardwareConcurrency || 4;
+            if (cores >= 8) return 8;
+            if (cores >= 4) return 6;
+            return 4;
+        }
+
+        function updateGraphicsVisuals() {
+            const isAuto = (currentGraphicsMode === 'auto');
+            const targetLevel = isAuto ? getAutoGraphicsLevel() : graphicsQuality;
+
+            for(let i=1; i<=10; i++) {
+                const el = document.getElementById(`gfx-seg-${i}`);
+                if(el) {
+                    if(!isAuto && i <= targetLevel) {
+                        el.className = 'volume-segment segment-active';
+                    } else {
+                        el.className = 'volume-segment segment-inactive';
+                    }
+                }
+            }
+
+            const minusBtn = document.getElementById('gfx-minus');
+            const plusBtn = document.getElementById('gfx-plus');
+            if (minusBtn && plusBtn) {
+                if (isAuto) {
+                    minusBtn.style.opacity = '0.25';
+                    minusBtn.style.pointerEvents = 'none';
+                    plusBtn.style.opacity = '0.25';
+                    plusBtn.style.pointerEvents = 'none';
+                } else {
+                    minusBtn.style.opacity = '1';
+                    minusBtn.style.pointerEvents = 'auto';
+                    plusBtn.style.opacity = '1';
+                    plusBtn.style.pointerEvents = 'auto';
+                }
+            }
+
+            applyRenderGraphicsSettings(targetLevel);
+        }
+
+        function applyRenderGraphicsSettings(level) {
+            if (!renderer || !sun || !ambientLight) return;
+
+            if (level === 1) {
+                sun.castShadow = false;
+                renderer.shadowMap.type = THREE.PCFShadowMap;
+                ambientLight.intensity = 0.8;
+                sun.intensity = 1.0;
+            } else {
+                sun.castShadow = true;
+                
+                let shadowSize = 512;
+                if (level >= 8) shadowSize = 2048;
+                else if (level >= 5) shadowSize = 1024;
+
+                sun.shadow.mapSize.width = shadowSize;
+                sun.shadow.mapSize.height = shadowSize;
+
+                const d = 150; 
+                sun.shadow.camera.left = -d;
+                sun.shadow.camera.right = d;
+                sun.shadow.camera.top = d;
+                sun.shadow.camera.bottom = -d;
+                sun.shadow.camera.near = 0.5;
+                sun.shadow.camera.far = 500; 
+                sun.shadow.bias = -0.0005;
+
+                if (level >= 7) {
+                    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                } else {
+                    renderer.shadowMap.type = THREE.PCFShadowMap;
+                }
+
+                ambientLight.intensity = THREE.MathUtils.lerp(0.8, 0.5, (level - 1) / 9);
+                sun.intensity = THREE.MathUtils.lerp(1.0, 1.4, (level - 1) / 9);
+            }
+
+            scene.traverse((object) => {
+                if (object.isMesh) {
+                    if (level > 1) {
+                        object.castShadow = true;
+                        object.receiveShadow = true;
+                    } else {
+                        object.castShadow = false;
+                        object.receiveShadow = false;
+                    }
+                    if (object.material) object.material.needsUpdate = true;
+                }
+            });
+            
+            renderer.shadowMap.needsUpdate = true;
+        }
+
+        function buildCameraInterface() {
+            const container = document.getElementById('camera-bars');
+            container.innerHTML = '';
+            for(let i=1; i<=10; i++) {
+                const el = document.createElement('div');
+                el.className = 'volume-segment';
+                el.id = `cam-seg-${i}`;
+                container.appendChild(el);
+            }
+            updateCameraSensitivityValue();
+        }
+
+        function updateCameraSensitivityValue() {
+            if (cameraSensitivityBars === 5) {
+                cameraSensitivityValue = 1;
+            } else if (cameraSensitivityBars < 5) {
+                cameraSensitivityValue = 1 - (5 - cameraSensitivityBars) * 0.16;
+            } else {
+                cameraSensitivityValue = 1 + (cameraSensitivityBars - 5) * 0.6;
+            }
+
+            cameraSensitivityValue = Math.round(cameraSensitivityValue * 100) / 100;
+
+            const display = document.getElementById('cam-value-display');
+            if (display) display.innerText = cameraSensitivityValue;
+
+            for(let i=1; i<=10; i++) {
+                const el = document.getElementById(`cam-seg-${i}`);
+                if(el) {
+                    if(i <= cameraSensitivityBars) {
+                        el.className = 'volume-segment segment-active';
+                    } else {
+                        el.className = 'volume-segment segment-inactive';
+                    }
+                }
+            }
+        }
+
         function playOofSound() {
             if (!audioCtx) return;
-            // Map 1-10 volume scaling into context normalized numeric thresholds
             const dynamicGainValue = (audioVolume / 10) * 0.4;
             if (dynamicGainValue <= 0) return;
 
@@ -630,7 +886,6 @@
 
             osc.type = 'triangle';
             
-            // Classic pitch climb simulation parameters
             const startTime = audioCtx.currentTime;
             osc.frequency.setValueAtTime(140, startTime);
             osc.frequency.linearRampToValueAtTime(280, startTime + 0.12);
@@ -670,10 +925,37 @@
             });
         }
 
+        function populateMovementModeDropdown() {
+            const movementSelect = document.getElementById('movement-mode-select');
+            if (currentInputMode === 'mobile') {
+                movementSelect.innerHTML = `
+                    <option value="classic">Classic Thumbstick</option>
+                    <option value="dynamic">Dynamic Thumbstick</option>
+                    <option value="tap">Tap to Move</option>
+                `;
+                if (!['classic', 'dynamic', 'tap'].includes(currentMovementMode)) {
+                    currentMovementMode = 'dynamic';
+                }
+            } else {
+                movementSelect.innerHTML = `
+                    <option value="keyboard">Keyboard + Mouse</option>
+                    <option value="tap">Click to Move</option>
+                `;
+                if (!['keyboard', 'tap'].includes(currentMovementMode)) {
+                    currentMovementMode = 'keyboard';
+                }
+            }
+            movementSelect.value = currentMovementMode;
+            localStorage.setItem('toh_moveMode', currentMovementMode); 
+        }
+
         function setupMenuLogic() {
             if(!isMobile) {
                 document.querySelectorAll('.desktop-shortcut').forEach(el => el.style.display = 'inline-block');
             }
+
+            populateMovementModeDropdown();
+            document.getElementById('shiftlock-toggle').innerText = isShiftLockEnabled ? 'On' : 'Off';
 
             document.getElementById('roblox-menu-btn').addEventListener('click', () => {
                 if (isRagdoll || !isRunning) return;
@@ -684,23 +966,53 @@
             document.getElementById('menu-respawn').addEventListener('click', triggerRespawnSequence);
             document.getElementById('menu-leave').addEventListener('click', triggerLeaveSequence);
 
-            // Volume Modifiers Buttons Listeners
             document.getElementById('vol-minus').addEventListener('click', () => {
-                if(audioVolume > 1) { audioVolume--; updateVolumeVisuals(); }
+                if(audioVolume > 1) { audioVolume--; updateVolumeVisuals(); localStorage.setItem('toh_audio', audioVolume); }
             });
             document.getElementById('vol-plus').addEventListener('click', () => {
-                if(audioVolume < 10) { audioVolume++; updateVolumeVisuals(); }
+                if(audioVolume < 10) { audioVolume++; updateVolumeVisuals(); localStorage.setItem('toh_audio', audioVolume); }
             });
 
-            // Movement Mode select listener
+            document.getElementById('graphics-mode-select').addEventListener('change', (e) => {
+                currentGraphicsMode = e.target.value;
+                updateGraphicsVisuals();
+                localStorage.setItem('toh_gfxMode', currentGraphicsMode);
+            });
+            document.getElementById('gfx-minus').addEventListener('click', () => {
+                if(currentGraphicsMode === 'manual' && graphicsQuality > 1) { graphicsQuality--; updateGraphicsVisuals(); localStorage.setItem('toh_gfxQual', graphicsQuality); }
+            });
+            document.getElementById('gfx-plus').addEventListener('click', () => {
+                if(currentGraphicsMode === 'manual' && graphicsQuality < 10) { graphicsQuality++; updateGraphicsVisuals(); localStorage.setItem('toh_gfxQual', graphicsQuality); }
+            });
+
+            document.getElementById('cam-minus').addEventListener('click', () => {
+                if(cameraSensitivityBars > 0) { cameraSensitivityBars--; updateCameraSensitivityValue(); localStorage.setItem('toh_camSens', cameraSensitivityBars); }
+            });
+            document.getElementById('cam-plus').addEventListener('click', () => {
+                if(cameraSensitivityBars < 10) { cameraSensitivityBars++; updateCameraSensitivityValue(); localStorage.setItem('toh_camSens', cameraSensitivityBars); }
+            });
+
             document.getElementById('movement-mode-select').addEventListener('change', (e) => {
                 currentMovementMode = e.target.value;
                 updateMovementModeUI();
+                localStorage.setItem('toh_moveMode', currentMovementMode);
+            });
+
+            document.getElementById('shiftlock-toggle').addEventListener('click', () => {
+                isShiftLockEnabled = !isShiftLockEnabled;
+                document.getElementById('shiftlock-toggle').innerText = isShiftLockEnabled ? 'On' : 'Off';
+                localStorage.setItem('toh_shiftLockEnabled', isShiftLockEnabled);
+                
+                if (!isShiftLockEnabled) {
+                    isShiftLock = false;
+                    const mobBtn = document.getElementById('mobile-shiftlock');
+                    if (mobBtn) mobBtn.classList.remove('active');
+                    checkPointerLockNeeds();
+                }
             });
 
             setupTabs();
 
-            // Leave execution bindings
             document.getElementById('confirm-leave-no').addEventListener('click', () => {
                 document.getElementById('leave-confirmation-panel').style.display = 'none';
                 document.getElementById('pause-menu').classList.add('open');
@@ -709,7 +1021,6 @@
                 window.location.href = "https://www.roblox.com";
             });
 
-            // Respawn execution bindings
             document.getElementById('confirm-respawn-no').addEventListener('click', () => {
                 document.getElementById('respawn-confirmation-panel').style.display = 'none';
                 document.getElementById('pause-menu').classList.add('open');
@@ -728,6 +1039,8 @@
             if(document.pointerLockElement === renderer.domElement) document.exitPointerLock();
             Object.keys(moveKeys).forEach(k => moveKeys[k] = false);
             joystickVector.set(0, 0);
+            
+            updateGraphicsVisuals();
         }
 
         function closePauseMenu() {
@@ -766,7 +1079,6 @@
             if (isRagdoll) return;
             isRagdoll = true;
 
-            // Fire Oof Audio Engine Track Node
             playOofSound();
 
             const df = document.getElementById('damage-flash');
@@ -817,6 +1129,9 @@
                 playerVel.set(0, 0, 0);
                 camYaw = 0; camPitch = 0;
                 isRagdoll = false;
+                
+                const currentLevel = (currentGraphicsMode === 'auto') ? getAutoGraphicsLevel() : graphicsQuality;
+                applyRenderGraphicsSettings(currentLevel);
             }, 3000);
         }
 
@@ -862,7 +1177,7 @@
             dynamicZone.style.display = 'block';
             dynamicZone.style.transition = 'none';
             dynamicZone.style.opacity = '1';
-            dynamicZone.offsetHeight; // Force reflow
+            dynamicZone.offsetHeight; 
             dynamicZone.style.transition = 'opacity 1.5s ease';
             setTimeout(() => {
                 if (currentMovementMode === 'dynamic') {
@@ -881,7 +1196,7 @@
             } else if (currentMovementMode === 'dynamic') {
                 if (classicJoystick) classicJoystick.style.display = 'none';
                 activateDynamicZoneVisual();
-            } else if (currentMovementMode === 'tap') {
+            } else if (currentMovementMode === 'tap' || currentMovementMode === 'keyboard') {
                 if (classicJoystick) classicJoystick.style.display = 'none';
                 if (dynamicZone) dynamicZone.style.display = 'none';
             }
@@ -907,6 +1222,12 @@
             const joystick = document.getElementById('joystick-container');
             const knob = document.getElementById('joystick-knob');
             const jumpBtn = document.getElementById('jump-button');
+
+            if (isShiftLock) {
+                document.getElementById('mobile-shiftlock').classList.add('active');
+            } else {
+                document.getElementById('mobile-shiftlock').classList.remove('active');
+            }
 
             const handleJoystick = (e) => {
                 e.preventDefault();
@@ -951,7 +1272,6 @@
                 }
             });
 
-            // Dynamic Zone Event Touch Bindings
             const dynamicZone = document.getElementById('dynamic-joystick-zone');
             const dynamicContainer = document.getElementById('dynamic-joystick-container');
             const dynamicKnob = document.getElementById('dynamic-joystick-knob');
@@ -1024,7 +1344,8 @@
 
             document.getElementById('mobile-shiftlock').addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                if (isMenuOpen || isRagdoll || !isRunning) return;
+                if (isMenuOpen || isRagdoll || !isRunning || !isShiftLockEnabled) return;
+                
                 isShiftLock = !isShiftLock;
                 const mobBtn = document.getElementById('mobile-shiftlock');
                 if (isShiftLock) mobBtn.classList.add('active');
@@ -1134,12 +1455,87 @@
                 stepGroup.position.set(Math.cos(angle)*r, i * 1.0 + ((i === 18) ? 0.25 : 0.5), Math.sin(angle)*r);
                 stepGroup.rotation.y = -angle; stepGroup.add(step); scene.add(stepGroup); collisionObjs.push(step);
                 if (i === 18) {
+                    // Add invisible wall inside the ladder to fix climbing
+                    const invWallGeo = new THREE.BoxGeometry(10.5, 18, 0.5);
+                    const invWallMat = new THREE.MeshPhongMaterial({ transparent: true, opacity: 0 });
+                    const invWall = new THREE.Mesh(invWallGeo, invWallMat);
+                    invWall.position.set(0, -10, (STEP_DEPTH / 2) - 0.5);
+                    step.add(invWall); 
+                    collisionObjs.push(invWall);
+                    ladderObjs.push(invWall);
+
                     for (let j = 1; j <= 9; j++) {
                         const rung = new THREE.Mesh(new THREE.BoxGeometry(STEP_WIDTH, 1, 1), new THREE.MeshPhongMaterial({ color: THEME.gray }));
-                        rung.position.set(0, -j * 2, (STEP_DEPTH / 2) - 0.5); step.add(rung); ladderObjs.push(rung); collisionObjs.push(rung); 
+                        rung.position.set(0, -j * 2, (STEP_DEPTH / 2) - 0.5); 
+                        step.add(rung); ladderObjs.push(rung); collisionObjs.push(rung); 
                     }
                 }
             }
+        }
+
+        // --- Collision Helper Functions ---
+        function hasWallCollision(pos, dir, objs) {
+            const yLevels = [pos.y - 1.5, pos.y - 3.5, pos.y - 5.4]; // 0.1 above feet to catch thin blocks
+            const xOffset = dir.z * 0.5;
+            const zOffset = dir.x * 0.5;
+            const origins = [
+                new THREE.Vector3(pos.x, 0, pos.z),
+                new THREE.Vector3(pos.x + xOffset, 0, pos.z + zOffset),
+                new THREE.Vector3(pos.x - xOffset, 0, pos.z - zOffset)
+            ];
+            for (let y of yLevels) {
+                for (let origin of origins) {
+                    wallRay.set(new THREE.Vector3(origin.x, y, origin.z), dir);
+                    wallRay.far = 0.8;
+                    if (wallRay.intersectObjects(objs).length > 0) return true;
+                }
+            }
+            return false;
+        }
+
+        function tryStepUp(pPos, moveDir, objs) {
+            const feetY = pPos.y - 5.5;
+            const rayOriginFeet = new THREE.Vector3(pPos.x, feetY + 0.1, pPos.z);
+            const perp = new THREE.Vector3(-moveDir.z, 0, moveDir.x).multiplyScalar(0.5);
+            const origins = [
+                rayOriginFeet.clone(),
+                rayOriginFeet.clone().add(perp),
+                rayOriginFeet.clone().sub(perp)
+            ];
+            
+            let highestStep = null;
+            
+            for (let origin of origins) {
+                wallRay.set(origin, moveDir);
+                wallRay.far = 1.2; 
+                const hits = wallRay.intersectObjects(objs);
+                
+                if (hits.length > 0) {
+                    const hitObj = hits[0].object;
+                    const bb = new THREE.Box3().setFromObject(hitObj);
+                    const topY = bb.max.y;
+                    const stepHeight = topY - feetY;
+                    
+                    if (stepHeight > -0.1 && stepHeight <= 2.1) {
+                        // Check if space above is clear
+                        const clearRayOrigin = new THREE.Vector3(pPos.x, feetY + 2.2, pPos.z);
+                        wallRay.set(clearRayOrigin, moveDir);
+                        wallRay.far = 1.2;
+                        const clearHits = wallRay.intersectObjects(objs);
+                        
+                        if (clearHits.length === 0) {
+                            if (highestStep === null || topY > highestStep) {
+                                highestStep = topY;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (highestStep !== null) {
+                return highestStep + 5.5;
+            }
+            return null;
         }
 
         function loop() {
@@ -1176,14 +1572,13 @@
                 if(moveKeys.w) d.z -= 1; if(moveKeys.s) d.z += 1;
                 if(moveKeys.a) d.x -= 1; if(moveKeys.d) d.x += 1;
                 if (joystickVector.length() > 0) { d.x = joystickVector.x; d.z = joystickVector.y; }
+                if (d.length() > 0) d.normalize();
 
-                // Flush Tap Tracking if Keyboard/Joystick Override Actions Fire
                 if (moveKeys.w || moveKeys.s || moveKeys.a || moveKeys.d || joystickVector.length() > 0) {
                     tapTargetPos = null;
                 }
 
-                // Compute Path Translation Vector Mapping towards target position
-                if (currentMovementMode === 'tap' && tapTargetPos) {
+                if ((currentMovementMode === 'tap' || currentMovementMode === 'click') && tapTargetPos) {
                     const diffX = tapTargetPos.x - playerPos.x;
                     const diffZ = tapTargetPos.z - playerPos.z;
                     const dist2D = Math.sqrt(diffX * diffX + diffZ * diffZ);
@@ -1192,57 +1587,229 @@
                         const localDir = worldDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -camYaw);
                         d.x = localDir.x;
                         d.z = localDir.z;
-                        
-                        if (isOnLadder) {
-                            if (tapTargetPos.y > playerPos.y + 0.5) playerPos.y += 11.2 * dt;
-                            else if (tapTargetPos.y < playerPos.y - 0.5) playerPos.y -= 11.2 * dt;
-                        }
                     } else {
                         tapTargetPos = null;
                     }
                 }
 
                 const isFirstPerson = camDist <= FIRST_PERSON_DIST;
+                
+                let moveDir = d.clone().applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize();
+                let moveDelta = moveDir.clone().multiplyScalar(16 * dt);
 
-                ladderRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 3, playerPos.z), new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), charGroup.rotation.y));
-                const lHits = ladderRay.intersectObjects(ladderObjs);
-                isOnLadder = (lHits.length > 0 && lHits[0].distance < 2.5);
-
-                if (isOnLadder) {
-                    playerVel.y = 0;
-                    if (moveKeys.w || joystickVector.y < -0.5) playerPos.y += 11.2 * dt;
-                    if (moveKeys.s || joystickVector.y > 0.5) playerPos.y -= 11.2 * dt;
-                    isGrounded = false; lastGroundedTime = now;
-                } else { playerVel.y -= 196.2 * dt; }
-
-                if(d.length() > 0) {
-                    d.applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize().multiplyScalar(16 * dt);
-                    playerPos.x += d.x; playerPos.z += d.z;
-                    const dist = Math.sqrt(playerPos.x**2 + playerPos.z**2);
-                    if (dist > APOTHEM - 1.2) { playerPos.x *= (APOTHEM-1.2)/dist; playerPos.z *= (APOTHEM-1.2)/dist; }
-                    if (isShiftLock || isFirstPerson) { charGroup.rotation.y = camYaw + Math.PI; } 
-                    else {
-                        let targetRot = Math.atan2(d.x, d.z); let angleDiff = targetRot - charGroup.rotation.y;
-                        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                        charGroup.rotation.y += angleDiff * 0.15;
+                // --- Climbing Detection ---
+                let isClimbing = false;
+                let climbTopY = 0;
+                const climbCheckDir = moveDir.length() > 0 ? moveDir : new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
+                
+                // Use multiple raycast heights to prevent falling off when passing 1-stud gaps (like on ladders)
+                const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
+                for (let y of yLevels) {
+                    const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
+                    wallRay.set(origin, climbCheckDir);
+                    wallRay.far = 1.2;
+                    const hits = wallRay.intersectObjects(collisionObjs);
+                    
+                    if (hits.length > 0) {
+                        const hitObj = hits[0].object;
+                        const bb = new THREE.Box3().setFromObject(hitObj);
+                        const topY = bb.max.y;
+                        const size = new THREE.Vector3(); bb.getSize(size);
+                        const minDim = Math.min(size.x, size.y, size.z);
+                        
+                        // Is it climbable? (Ladder or 0.1-2 studs thick)
+                        let isClimbable = ladderObjs.includes(hitObj);
+                        if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
+                        
+                        if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
+                            // Is the space above it blocked? If so, we must climb (don't climb if we can just step over it)
+                            const originStep = new THREE.Vector3(playerPos.x, playerPos.y - 3.3, playerPos.z);
+                            wallRay.set(originStep, climbCheckDir);
+                            wallRay.far = 1.2;
+                            const hitsStep = wallRay.intersectObjects(collisionObjs);
+                            
+                            if (hitsStep.length > 0) {
+                                isClimbing = true;
+                                climbTopY = topY;
+                                charGroup.rotation.y = Math.atan2(climbCheckDir.x, climbCheckDir.z);
+                                break; // Found a climbable surface
+                            }
+                        }
                     }
-                    if(isGrounded || isOnLadder) {
+                }
+
+                let isWalking = false;
+
+                if (isClimbing) {
+                    // Ledge Climb Logic: If near the top, step over it
+                    if (playerPos.y - 5.5 >= climbTopY - 0.5) {
+                        playerPos.y = climbTopY + 5.5;
+                        if (moveKeys.w || moveKeys.a || moveKeys.d || moveKeys.s || joystickVector.length() > 0) {
+                            playerPos.x += moveDelta.x;
+                            playerPos.z += moveDelta.z;
+                        }
+                        isClimbing = false;
+                        isWalking = true;
+                    } else {
+                        playerVel.set(0, 0, 0); // Stop all velocity so they don't fall
+                        let climbDir = 1;
+                        // If looking down, W/A/D makes you go down, S makes you go up
+                        if (camPitch < -0.5) climbDir = -1;
+                        
+                        let climbDelta = 0;
+                        if (moveKeys.w || moveKeys.a || moveKeys.d) climbDelta += 11.2 * dt * climbDir;
+                        if (moveKeys.s) climbDelta -= 11.2 * dt * climbDir;
+                        if (joystickVector.y < -0.5) climbDelta += 11.2 * dt * climbDir;
+                        if (joystickVector.y > 0.5) climbDelta -= 11.2 * dt * climbDir;
+                        
+                        // Prevent climbing through ceilings
+                        if (climbDelta > 0) {
+                            ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
+                            const cHHits = ceilingRay.intersectObjects(collisionObjs);
+                            if (cHHits.length > 0 && cHHits[0].distance < 0.9) climbDelta = 0;
+                        }
+                        
+                        // Only animate if actually moving
+                        if (climbDelta !== 0) {
+                            animTimer += dt * 6;
+                        }
+                        
+                        playerPos.y += climbDelta;
+                        isGrounded = false; lastGroundedTime = now;
+                        moveDelta.set(0, 0, 0); // Prevent horizontal movement while climbing
+                    }
+                } else {
+                    playerVel.y -= 196.2 * dt;
+                    
+                    // --- Movement with Side Collision & Auto-Stepping ---
+                    if (moveDelta.x !== 0) {
+                        let dirX = new THREE.Vector3(Math.sign(moveDelta.x), 0, 0);
+                        if (!hasWallCollision(new THREE.Vector3(playerPos.x + moveDelta.x, playerPos.y, playerPos.z), dirX, collisionObjs)) {
+                            playerPos.x += moveDelta.x;
+                            isWalking = true;
+                        } else {
+                            let stepY = tryStepUp(playerPos, dirX, collisionObjs);
+                            if (stepY !== null) {
+                                playerPos.y = stepY;
+                                playerPos.x += moveDelta.x;
+                                isWalking = true;
+                            }
+                        }
+                    }
+                    
+                    if (moveDelta.z !== 0) {
+                        let dirZ = new THREE.Vector3(0, 0, Math.sign(moveDelta.z));
+                        if (!hasWallCollision(new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDelta.z), dirZ, collisionObjs)) {
+                            playerPos.z += moveDelta.z;
+                            isWalking = true;
+                        } else {
+                            let stepY = tryStepUp(playerPos, dirZ, collisionObjs);
+                            if (stepY !== null) {
+                                playerPos.y = stepY;
+                                playerPos.z += moveDelta.z;
+                                isWalking = true;
+                            }
+                        }
+                    }
+                    
+                    if (isWalking) {
+                        if (isShiftLock || isFirstPerson) { 
+                            charGroup.rotation.y = camYaw + Math.PI; 
+                        } else {
+                            let targetRot = Math.atan2(moveDir.x, moveDir.z); 
+                            let angleDiff = targetRot - charGroup.rotation.y;
+                            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                            charGroup.rotation.y += angleDiff * 0.15;
+                        }
+                    } else {
+                        if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
+                    }
+                }
+
+                // --- Animation Update ---
+                if (isClimbing) {
+                    // Face the wall directly
+                    charGroup.rotation.y = Math.atan2(climbCheckDir.x, climbCheckDir.z);
+                    charTorso.position.z = -0.5; // 0.5 studs forward
+                    charHead.position.z = 0.5;   // 0.5 studs backward
+                    charHead.rotation.x = -15 * (Math.PI / 180); // Look up
+                    pL_Arm.rotation.x = -Math.PI / 2 + Math.sin(animTimer) * (Math.PI / 4); // Reach up
+                    pR_Arm.rotation.x = -Math.PI / 2 - Math.sin(animTimer) * (Math.PI / 4);
+                    pL_Arm.rotation.z = 5 * (Math.PI / 180);
+                    pR_Arm.rotation.z = -5 * (Math.PI / 180);
+                    pL_Leg.position.x = -0.65; // 0.55 + 0.1
+                    pR_Leg.position.x = 0.65;  // 0.55 + 0.1
+                    let legVal = Math.sin(animTimer);
+                    let rightLegVal = Math.sin(animTimer + Math.PI);
+                    
+                    if (legVal > 0) {
+                        pL_Leg.rotation.x = -15 * legVal * (Math.PI / 180); // Rotate backwards 15 deg
+                        pL_Leg.position.y = 2 + legVal * 1; // Move up 1 stud
+                        pL_Leg.position.z = -legVal * 1;   // Move forward 1 stud
+                    } else {
+                        pL_Leg.rotation.x = 5 * -legVal * (Math.PI / 180); // Rotate forward 5 deg
+                        pL_Leg.position.y = 2;
+                        pL_Leg.position.z = 0;
+                    }
+                    if (rightLegVal > 0) {
+                        pR_Leg.rotation.x = -15 * rightLegVal * (Math.PI / 180);
+                        pR_Leg.position.y = 2 + rightLegVal * 1;
+                        pR_Leg.position.z = -rightLegVal * 1;
+                    } else {
+                        pR_Leg.rotation.x = 5 * -rightLegVal * (Math.PI / 180);
+                        pR_Leg.position.y = 2;
+                        pR_Leg.position.z = 0;
+                    }
+                } else {
+                    charTorso.position.z = 0;
+                    charHead.position.z = 0; // Reset head position
+                    charHead.rotation.x = 0;
+                    pL_Arm.rotation.z = 0;
+                    pR_Arm.rotation.z = 0;
+                    pL_Leg.position.x = -0.55;
+                    pR_Leg.position.x = 0.55;
+                    
+                    if (playerVel.y > 0 || !isGrounded) {
+                        pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
+                        pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
+                        pL_Leg.position.y = 2; pL_Leg.position.z = 0;
+                        pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                    } else if (isWalking) {
                         animTimer += dt * 14; const sw = Math.sin(animTimer);
                         pL_Arm.rotation.x = sw * 0.78; pR_Arm.rotation.x = -sw * 0.78;
                         pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
+                        pL_Leg.position.y = 2; pL_Leg.position.z = 0;
+                        pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                    } else {
+                        pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85;
+                        pL_Leg.position.y = 2; pL_Leg.position.z = 0;
+                        pR_Leg.position.y = 2; pR_Leg.position.z = 0;
                     }
-                } else {
-                    if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
-                    if(isGrounded) { pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85; }
                 }
 
-                if(!isGrounded && !isOnLadder) {
-                    pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
-                    pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
+                // --- Jump Logic ---
+                if (moveKeys.space) {
+                    if (isClimbing) {
+                        playerVel.y = 62.6;
+                        const backDir = climbCheckDir.clone().negate();
+                        // Nudge off the ladder so they don't immediately re-grab
+                        playerPos.x += backDir.x * 2.0;
+                        playerPos.z += backDir.z * 2.0;
+                        // Launch backward (13-16 studs)
+                        playerVel.x = backDir.x * 25;
+                        playerVel.z = backDir.z * 25;
+                        isClimbing = false;
+                        lastGroundedTime = 0;
+                        moveKeys.space = false; // Consume jump
+                    } else if (now - lastGroundedTime < COYOTE_DURATION) {
+                        playerVel.y = 62.6;
+                        isGrounded = false;
+                        lastGroundedTime = 0;
+                        moveKeys.space = false; // Consume jump
+                    }
                 }
 
-                if(moveKeys.space && (now - lastGroundedTime < COYOTE_DURATION)) { playerVel.y = 62.6; isGrounded = false; isOnLadder = false; lastGroundedTime = 0; }
                 playerPos.y += playerVel.y * dt;
 
                 if (playerVel.y > 0) {
@@ -1251,7 +1818,7 @@
                     if (cHHits.length > 0 && cHHits[0].distance < 0.9) playerVel.y = 0;
                 }
 
-                if(!isOnLadder) {
+                if(!isClimbing) {
                     isGrounded = false;
                     floorRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 2, playerPos.z), new THREE.Vector3(0,-1,0));
                     const fHits = floorRay.intersectObjects(collisionObjs);
@@ -1267,7 +1834,7 @@
                 charGroup.position.set(playerPos.x, playerPos.y - 5.5, playerPos.z);
                 const headWorldPos = new THREE.Vector3(); charHead.getWorldPosition(headWorldPos);
                 let camOffset = (isShiftLock && !isFirstPerson) ? new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).multiplyScalar(1.75) : new THREE.Vector3();
-                const ideal = new THREE.Vector3(headWorldPos.x + camOffset.x + Math.sin(camYaw)*Math.cos(camPitch)*camDist, headWorldPos.y + camOffset.y + Math.sin(camPitch)*camDist, headWorldPos.z + Math.cos(camYaw)*Math.cos(camPitch)*camDist);
+                const ideal = new THREE.Vector3(headWorldPos.x + camOffset.x + Math.sin(camYaw)*Math.cos(camPitch)*camDist, headWorldPos.y + camOffset.y + Math.sin(camPitch)*camDist, headWorldPos.z + camOffset.z + Math.cos(camYaw)*Math.cos(camPitch)*camDist);
                 cameraRay.set(headWorldPos, ideal.clone().sub(headWorldPos).normalize());
                 const wallHits = cameraRay.intersectObjects(collisionObjs);
                 camera.position.copy((wallHits.length > 0 && wallHits[0].distance < camDist) ? wallHits[0].point.add(cameraRay.ray.direction.clone().multiplyScalar(-1.2)) : ideal);
@@ -1278,7 +1845,6 @@
                 charMaterials.forEach(m => { m.opacity = op; m.transparent = (op < 1); m.needsUpdate = true; });
             }
 
-            // Animate and Fade out the 3D target ring indicator
             if (tapMarkerMesh && tapMarkerMesh.visible) {
                 tapMarkerMesh.scale.addScalar(dt * 2.0);
                 tapMarkerMesh.material.opacity -= dt * 2.0;
@@ -1287,9 +1853,48 @@
                 }
             }
 
+            if (!isRunning && clock.getOldTime() === 0) {
+                setTimeout(async () => {
+                    const cloudAvatar = await loadAvatarFromCloud('current_user_id');
+                    if (cloudAvatar) {
+                        Object.keys(cloudAvatar).forEach(part => {
+                            if (THEME[part] !== undefined) THEME[part] = cloudAvatar[part];
+                        });
+                    }
+
+                    if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+                    checkPointerLockNeeds();
+                    
+                    const loader = document.getElementById('loading-screen');
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+
+                    if (currentInputMode === 'mobile') {
+                        document.getElementById('mobile-controls').style.display = 'block';
+                    }
+                    updateMovementModeUI();
+                    isRunning = true;
+                }, 2000);
+            }
+
             renderer.render(scene, camera);
         }
         init();
+
+        /**
+         * Fetches avatar state from a remote server.
+         */
+        async function loadAvatarFromCloud(userId = 'default_user') {
+            try {
+                const response = await fetch(`https://roblox-devt.github.io/home/get-avatar?userId=${userId}`);
+                if (!response.ok) throw new Error('Could not fetch avatar');
+                const data = await response.json();
+                return data.avatarState;
+            } catch (error) {
+                console.error("Cloud Fetch Error:", error);
+                return null;
+            }
+        }
     </script>
 </body>
 </html>
