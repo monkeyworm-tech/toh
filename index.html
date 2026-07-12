@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Tower Remake - Settings Dashboard</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap');
         
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Open Sans', sans-serif; user-select: none; touch-action: none; }
         
@@ -338,7 +338,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 
     <script>
-        const THEME = { head: 0xffdbac, torso: 0x3a86ff, skin: 0xffdbac, legs: 0x8338ec, gray: 0xcccccc, blue: 0x0077ff, glowOrange: 0xffa500 };
+        const FACE_IMAGE_URL = "https://images.weserv.nl/?url=static.wikia.nocookie.net/roblox/images/2/26/Smile.png";
+        const THEME = { head: 0xffd33d, torso: 0x0096ff, skin: 0xffd33d, legs: 0x2d9b2d, gray: 0xcccccc, blue: 0x0077ff, glowOrange: 0xffa500 };
         let scene, camera, renderer, clock;
         let moveKeys = { w: false, a: false, s: false, d: false, space: false };
         let playerVel = new THREE.Vector3();
@@ -388,7 +389,7 @@
         const cameraRay = new THREE.Raycaster();
         const wallRay = new THREE.Raycaster();
 
-        let joystickVector = new THREE.Vector2(0, 0);
+        let joystickVector = new THREE.Vector2(0,0);
         let joystickTouchId = null;
         let isRightMouseDown = false;
         
@@ -408,44 +409,9 @@
         let currentClimbDir = new THREE.Vector3(0, 0, 1);
         let walkSoundTimer = 0.3;
         let climbSoundTimer = 0.4;
+        let spinningObstacles = [];
 
-        function loadSettings() {
-            const savedAudio = localStorage.getItem('toh_audio');
-            if (savedAudio !== null) audioVolume = parseInt(savedAudio);
-            const savedGfxMode = localStorage.getItem('toh_gfxMode');
-            if (savedGfxMode !== null) currentGraphicsMode = savedGfxMode;
-            const savedGfxQual = localStorage.getItem('toh_gfxQual');
-            if (savedGfxQual !== null) graphicsQuality = parseInt(savedGfxQual);
-            const savedSens = localStorage.getItem('toh_camSens');
-            if (savedSens !== null) cameraSensitivityBars = parseInt(savedSens);
-            const savedShiftLock = localStorage.getItem('toh_shiftLockEnabled');
-            if (savedShiftLock !== null) isShiftLockEnabled = (savedShiftLock === 'true');
-            const savedMoveMode = localStorage.getItem('toh_moveMode');
-            if (savedMoveMode !== null) currentMovementMode = savedMoveMode;
-        }
-
-        function switchToPCControls() {
-            if (currentInputMode === 'pc') return;
-            currentInputMode = 'pc';
-            document.getElementById('mobile-controls').style.display = 'none';
-            joystickVector.set(0, 0);
-            dynamicTouchId = null;
-            joystickTouchId = null;
-            trailCircles.forEach(c => c.style.display = 'none');
-            populateMovementModeDropdown();
-            updateMovementModeUI();
-        }
-
-        function switchToMobileControls() {
-            if (currentInputMode === 'mobile') return;
-            currentInputMode = 'mobile';
-            document.getElementById('mobile-controls').style.display = 'block';
-            moveKeys = { w: false, a: false, s: false, d: false, space: false };
-            populateMovementModeDropdown();
-            updateMovementModeUI();
-        }
-
-        function init() {
+        async function init() {
             loadSettings();
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x88ccff);
@@ -454,6 +420,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
+            renderer.outputColorSpace = THREE.SRGBColorSpace; // Fix colors
             document.body.appendChild(renderer.domElement);
 
             ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -463,6 +430,12 @@
             scene.add(sun);
 
             buildTower();
+            
+            // Ensure fonts are loaded before drawing text texture
+            await document.fonts.load('80px Orbitron');
+            await document.fonts.load('50px Orbitron');
+            buildStage3(); 
+            
             buildCharacter();
             setupMobileControls();
             setupMenuLogic();
@@ -489,7 +462,6 @@
             });
 
             document.addEventListener('pointerlockchange', () => {
-                // Removed !isMobile check to allow pointer lock on touch laptops
                 if (document.pointerLockElement !== renderer.domElement && isRunning && !isMenuOpen) {
                     if (isShiftLock || camDist <= FIRST_PERSON_DIST) openPauseMenu();
                 }
@@ -510,7 +482,6 @@
                 if (isMenuOpen) {
                     if (key === 'l') triggerLeaveSequence();
                     if (key === 'r') triggerRespawnSequence();
-                    // Enter confirms the action if a confirmation panel is open
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         if (document.getElementById('leave-confirmation-panel').style.display === 'flex') {
@@ -670,6 +641,42 @@
             loop();
         }
 
+        function loadSettings() {
+            const savedAudio = localStorage.getItem('toh_audio');
+            if (savedAudio !== null) audioVolume = parseInt(savedAudio);
+            const savedGfxMode = localStorage.getItem('toh_gfxMode');
+            if (savedGfxMode !== null) currentGraphicsMode = savedGfxMode;
+            const savedGfxQual = localStorage.getItem('toh_gfxQual');
+            if (savedGfxQual !== null) graphicsQuality = parseInt(savedGfxQual);
+            const savedSens = localStorage.getItem('toh_camSens');
+            if (savedSens !== null) cameraSensitivityBars = parseInt(savedSens);
+            const savedShiftLock = localStorage.getItem('toh_shiftLockEnabled');
+            if (savedShiftLock !== null) isShiftLockEnabled = (savedShiftLock === 'true');
+            const savedMoveMode = localStorage.getItem('toh_moveMode');
+            if (savedMoveMode !== null) currentMovementMode = savedMoveMode;
+        }
+
+        function switchToPCControls() {
+            if (currentInputMode === 'pc') return;
+            currentInputMode = 'pc';
+            document.getElementById('mobile-controls').style.display = 'none';
+            joystickVector.set(0, 0);
+            dynamicTouchId = null;
+            joystickTouchId = null;
+            trailCircles.forEach(c => c.style.display = 'none');
+            populateMovementModeDropdown();
+            updateMovementModeUI();
+        }
+
+        function switchToMobileControls() {
+            if (currentInputMode === 'mobile') return;
+            currentInputMode = 'mobile';
+            document.getElementById('mobile-controls').style.display = 'block';
+            moveKeys = { w: false, a: false, s: false, d: false, space: false };
+            populateMovementModeDropdown();
+            updateMovementModeUI();
+        }
+
         function buildVolumeInterface() {
             const container = document.getElementById('volume-bars');
             container.innerHTML = '';
@@ -773,13 +780,29 @@
                 ambientLight.intensity = THREE.MathUtils.lerp(0.8, 0.5, (level - 1) / 9);
                 sun.intensity = THREE.MathUtils.lerp(1.0, 1.4, (level - 1) / 9);
             }
+
             scene.traverse((object) => {
                 if (object.isMesh) {
-                    if (level > 1) { object.castShadow = true; object.receiveShadow = true; }
-                    else { object.castShadow = false; object.receiveShadow = false; }
+                    if (level > 1) {
+                        object.castShadow = false; // Only player casts shadows
+                        object.receiveShadow = true;
+                    } else {
+                        object.castShadow = false;
+                        object.receiveShadow = false;
+                    }
                     if (object.material) object.material.needsUpdate = true;
                 }
             });
+            
+            // Ensure player character casts shadows
+            if (level > 1 && charGroup) {
+                charGroup.traverse((obj) => {
+                    if (obj.isMesh) {
+                        obj.castShadow = true;
+                    }
+                });
+            }
+            
             renderer.shadowMap.needsUpdate = true;
         }
 
@@ -1056,10 +1079,10 @@
             const partsToBreak = [
                 { obj: charHead, offset: new THREE.Vector3(0, 4.75, 0) },
                 { obj: charTorso, offset: new THREE.Vector3(0, 3, 0) },
-                { obj: pL_Arm, offset: new THREE.Vector3(-1.55, 3.5, 0) },
-                { obj: pR_Arm, offset: new THREE.Vector3(1.55, 3.5, 0) },
-                { obj: pL_Leg, offset: new THREE.Vector3(-0.55, 2, 0) },
-                { obj: pR_Leg, offset: new THREE.Vector3(0.55, 2, 0) }
+                { obj: pL_Arm, offset: new THREE.Vector3(-1.5, 4, 0) },
+                { obj: pR_Arm, offset: new THREE.Vector3(1.5, 4, 0) },
+                { obj: pL_Leg, offset: new THREE.Vector3(-0.5, 2, 0) },
+                { obj: pR_Leg, offset: new THREE.Vector3(0.5, 2, 0) }
             ];
 
             ragdollParts = [];
@@ -1077,12 +1100,15 @@
             setTimeout(() => {
                 charGroup.add(charHead); charHead.position.set(0, 4.75, 0); charHead.rotation.set(0,0,0);
                 charGroup.add(charTorso); charTorso.position.set(0, 3, 0); charTorso.rotation.set(0,0,0);
-                charGroup.add(pL_Arm); pL_Arm.position.set(-1.55, 3.5, 0); pL_Arm.rotation.set(0,0,0);
-                charGroup.add(pR_Arm); pR_Arm.position.set(1.55, 3.5, 0); pR_Arm.rotation.set(0,0,0);
-                charGroup.add(pL_Leg); pL_Leg.position.set(-0.55, 2, 0); pL_Leg.rotation.set(0,0,0);
-                charGroup.add(pR_Leg); pR_Leg.position.set(0.55, 2, 0); pR_Leg.rotation.set(0,0,0);
+                charGroup.add(pL_Arm); pL_Arm.position.set(-1.5, 4, 0); pL_Arm.rotation.set(0,0,0);
+                charGroup.add(pR_Arm); pR_Arm.position.set(1.5, 4, 0); pR_Arm.rotation.set(0,0,0);
+                charGroup.add(pL_Leg); pL_Leg.position.set(-0.5, 2, 0); pL_Leg.rotation.set(0,0,0);
+                charGroup.add(pR_Leg); pR_Leg.position.set(0.5, 2, 0); pR_Leg.rotation.set(0,0,0);
+                
                 playerPos.set(OUTER_RADIUS - 8, 6.5, 0);
-                playerVel.set(0, 0, 0); camYaw = 0; camPitch = 0;
+                playerVel.set(0, 0, 0); 
+                camYaw = 0; 
+                camPitch = 0;
                 isRagdoll = false;
                 const currentLevel = (currentGraphicsMode === 'auto') ? getAutoGraphicsLevel() : graphicsQuality;
                 applyRenderGraphicsSettings(currentLevel);
@@ -1097,7 +1123,6 @@
         }
 
         function checkPointerLockNeeds() {
-            // Removed isMobile check to fix touch screen laptops
             if (isMenuOpen || isRagdoll || !isRunning) return;
             const isFirstPerson = camDist <= FIRST_PERSON_DIST;
             if (isShiftLock || isFirstPerson) {
@@ -1285,38 +1310,97 @@
         }
 
         function createBevelPart(w, h, d, color) {
-            const b = 0.06; const s = new THREE.Shape(); const x = -w/2, y = -h/2;
+            const b = 0.08; const s = new THREE.Shape(); const x = -w/2, y = -h/2;
             s.moveTo(x+b, y); s.lineTo(x+w-b, y); s.quadraticCurveTo(x+w, y, x+w, y+b);
             s.lineTo(x+w, y+h-b); s.quadraticCurveTo(x+w, y+h, x+w-b, y+h);
             s.lineTo(x+b, y+h); s.quadraticCurveTo(x, y+h, x, y+h-b);
             s.lineTo(x, y+b); s.quadraticCurveTo(x, y, x+b, y);
             const g = new THREE.ExtrudeGeometry(s, { depth: d-(b*2), bevelEnabled: true, bevelSize: b, bevelThickness: b, bevelSegments: 2 });
-            g.center(); const m = new THREE.MeshPhongMaterial({ color, transparent: true });
+            g.center(); const m = new THREE.MeshStandardMaterial({ color, roughness: 0.55, transparent: true });
             charMaterials.push(m); return new THREE.Mesh(g, m);
+        }
+        
+        function makeBeveledCylinder(radius, height, bevel, radialSegments, bevelSegments) {
+            const points = [];
+            const halfH = height / 2;
+
+            points.push(new THREE.Vector2(0, -halfH));
+            points.push(new THREE.Vector2(radius - bevel, -halfH));
+
+            for (let i = 1; i <= bevelSegments; i++) {
+                const a = (i / bevelSegments) * Math.PI / 2;
+                points.push(new THREE.Vector2(
+                    radius - bevel + bevel * Math.sin(a),
+                    -halfH + bevel - bevel * Math.cos(a)
+                ));
+            }
+
+            points.push(new THREE.Vector2(radius, halfH - bevel));
+
+            for (let i = 1; i <= bevelSegments; i++) {
+                const a = (i / bevelSegments) * Math.PI / 2;
+                points.push(new THREE.Vector2(
+                    radius - bevel + bevel * Math.cos(a),
+                    halfH - bevel + bevel * Math.sin(a)
+                ));
+            }
+
+            points.push(new THREE.Vector2(0, halfH));
+
+            const geo = new THREE.LatheGeometry(points, radialSegments);
+            geo.computeVertexNormals();
+            return geo;
         }
 
         function buildCharacter() {
             charGroup = new THREE.Group();
-            const hr = 0.75, hh = 1.4, hb = 0.15;
-            const pts = [new THREE.Vector2(0, -hh/2), new THREE.Vector2(hr-hb, -hh/2), new THREE.Vector2(hr, -hh/2+hb), new THREE.Vector2(hr, hh/2-hb), new THREE.Vector2(hr-hb, hh/2), new THREE.Vector2(0, hh/2)];
-            const headMat = new THREE.MeshPhongMaterial({ color: THEME.head, transparent: true });
-            charMaterials.push(headMat); charHead = new THREE.Mesh(new THREE.LatheGeometry(pts, 32), headMat); charHead.position.y = 4.75;
             
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true }); charMaterials.push(eyeMat);
-            const e1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.1), eyeMat); e1.position.set(-0.25, 0.1, 0.78);
-            const e2 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.1), eyeMat); e2.position.set(0.25, 0.1, 0.78);
-            charHead.add(e1, e2);
-            const mPts = []; for(let i=0; i<=10; i++){ let a = (i/10)*Math.PI; mPts.push(new THREE.Vector3(Math.cos(a)*0.3, -Math.sin(a)*0.2 - 0.2, 0.76)); }
-            charHead.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(mPts), 20, 0.04, 8, false), eyeMat));
+            const headMat = new THREE.MeshStandardMaterial({ color: THEME.head, roughness: 0.55, transparent: true });
+            charMaterials.push(headMat); 
+            charHead = new THREE.Mesh(makeBeveledCylinder(0.75, 1.5, 0.36, 32, 8), headMat); 
+            charHead.position.y = 4.75;
+            charHead.castShadow = true;
+            
+            // Face texture setup from STUDS code
+            const faceGeo = new THREE.CylinderGeometry(0.755, 0.755, 1.4, 32, 1, true, Math.PI * 1.65, Math.PI * 0.7);
+            const loader = new THREE.TextureLoader();
+            loader.crossOrigin = "Anonymous";
+            const faceTexture = loader.load(FACE_IMAGE_URL, (tex) => {
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(1.2, 1);
+                tex.offset.x = -0.1;
+                tex.needsUpdate = true;
+            });
+            faceTexture.colorSpace = THREE.SRGBColorSpace;
+            faceTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+            const faceMat = new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+            faceMat.userData.keepTransparent = true; // Prevent opacity loop from breaking transparency
+            charMaterials.push(faceMat); // Add to charMaterials for opacity fade
+            const face = new THREE.Mesh(faceGeo, faceMat);
+            face.position.set(0, 0, 0); // Local to charHead
+            charHead.add(face); // Attach to head so it moves during climb animation
+            
             charGroup.add(charHead);
 
-            charTorso = createBevelPart(2, 2, 1, THEME.torso); charTorso.position.y = 3; charGroup.add(charTorso);
-            const addLimb = (x, y, color, off) => {
+            // STUDS Body Parts (Exact Dimensions and Positions)
+            charTorso = createBevelPart(2, 2, 1, THEME.torso); 
+            charTorso.position.y = 3; 
+            charGroup.add(charTorso);
+            
+            const addLimb = (x, y, color) => {
                 const p = new THREE.Group(); p.position.set(x, y, 0);
-                const m = createBevelPart(1, 2, 1, color); m.position.y = off; p.add(m); charGroup.add(p); return p;
+                const m = createBevelPart(1, 2, 1, color); 
+                m.position.y = -1; // Shift down so the group rotates around the top (shoulder/hip)
+                p.add(m); 
+                charGroup.add(p); 
+                return p;
             };
-            pL_Arm = addLimb(-1.55, 3.5, THEME.skin, -0.5); pR_Arm = addLimb(1.55, 3.5, THEME.skin, -0.5);
-            pL_Leg = addLimb(-0.55, 2, THEME.legs, -1); pR_Leg = addLimb(0.55, 2, THEME.legs, -1);
+            pL_Arm = addLimb(-1.5, 4, THEME.skin); 
+            pR_Arm = addLimb(1.5, 4, THEME.skin);
+            pL_Leg = addLimb(-0.5, 2, THEME.legs); 
+            pR_Leg = addLimb(0.5, 2, THEME.legs);
             scene.add(charGroup);
         }
 
@@ -1326,10 +1410,68 @@
             ctx.font = 'bold 70px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#555555'; ctx.fillText(text, 256, 80);
             return new THREE.CanvasTexture(canvas);
         }
+        
+        function createStage1TextTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#E6F7FF'; 
+            
+            ctx.font = '80px Orbitron, sans-serif';
+            ctx.fillText('BALLS', 512, 200);
+            
+            ctx.font = '50px Orbitron, sans-serif';
+            ctx.fillText('OBRENTUNE', 512, 280);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createStage2TextTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#E6F7FF'; 
+            
+            ctx.font = '80px Orbitron, sans-serif';
+            ctx.fillText('BLENDER', 512, 200);
+            
+            ctx.font = '50px Orbitron, sans-serif';
+            ctx.fillText('UWUPXYL', 512, 280);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createStage3TextTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#E6F7FF'; 
+            
+            ctx.font = '80px Orbitron, sans-serif';
+            ctx.fillText('BULLSEYE', 512, 200);
+            
+            ctx.font = '50px Orbitron, sans-serif';
+            ctx.fillText('PRECESSION', 512, 280);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
 
         function buildTower() {
             const TOWER_HEIGHT = 18.5;
-            const tower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, TOWER_HEIGHT, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: THEME.gray, side: THREE.DoubleSide }));
+            // Added flatShading: true to make walls look like individual parts
+            const tower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, TOWER_HEIGHT, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: THEME.gray, side: THREE.DoubleSide, flatShading: true }));
             tower.position.y = TOWER_HEIGHT / 2; tower.rotation.y = Math.PI / NUM_SIDES; 
             scene.add(tower); collisionObjs.push(tower);
 
@@ -1346,7 +1488,7 @@
             }
             floorShape.holes.push(holePath);
 
-            const floorMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(floorShape, { depth: 1, bevelEnabled: false }), new THREE.MeshPhongMaterial({ color: THEME.gray }));
+            const floorMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(floorShape, { depth: 1, bevelEnabled: false }), new THREE.MeshPhongMaterial({ color: THEME.gray, flatShading: true }));
             floorMesh.rotation.x = -Math.PI / 2; floorMesh.rotation.z = (9 * Math.PI) / 180; 
             scene.add(floorMesh); collisionObjs.push(floorMesh);
 
@@ -1386,7 +1528,6 @@
                 stepGroup.position.set(Math.cos(angle)*r, i * 1.0 + ((i === 18) ? 0.25 : 0.5), Math.sin(angle)*r);
                 stepGroup.rotation.y = -angle; stepGroup.add(step); scene.add(stepGroup); collisionObjs.push(step);
                 if (i === 18) {
-                    // Add invisible wall inside the ladder to fix climbing
                     const invWallGeo = new THREE.BoxGeometry(10.5, 18, 0.5);
                     const invWallMat = new THREE.MeshPhongMaterial({ transparent: true, opacity: 0 });
                     const invWall = new THREE.Mesh(invWallGeo, invWallMat);
@@ -1402,6 +1543,375 @@
                     }
                 }
             }
+        }
+        
+        function createPlatform(i, y, color) {
+            const platGroup = new THREE.Group();
+            const plat = new THREE.Mesh(new THREE.BoxGeometry(STEP_WIDTH, 0.5, STEP_DEPTH), new THREE.MeshPhongMaterial({ color }));
+            const angle = i * (Math.PI * 2 / NUM_SIDES);
+            const r = APOTHEM - (STEP_DEPTH / 4);
+            platGroup.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
+            platGroup.rotation.y = -angle;
+            platGroup.add(plat); 
+            scene.add(platGroup); 
+            collisionObjs.push(plat);
+            return platGroup;
+        }
+
+        // SAVED STAGE 1 LOGIC
+        function buildStage1() {
+            const stageColor = 0x90D5FF;
+            const ballColor = 0x90D5FF; 
+            const stageStartY = 18.5;
+            const startPlatformY = 18.75;
+            const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const endAngle = (3 + 20) * (Math.PI * 2 / NUM_SIDES); 
+            const endPlatformY = startPlatformY + 40;
+            const stageEndY = endPlatformY + 0.25;
+            const stageHeight = stageEndY - stageStartY;
+            
+            // Added flatShading: true
+            const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
+            stageTower.position.y = stageStartY + stageHeight / 2;
+            stageTower.rotation.y = Math.PI / NUM_SIDES;
+            scene.add(stageTower); collisionObjs.push(stageTower);
+            
+            createPlatform(18, startPlatformY, stageColor);
+            createPlatform(3, endPlatformY, stageColor);
+            
+            const textMat = new THREE.MeshBasicMaterial({ map: createStage1TextTexture(), transparent: true, side: THREE.DoubleSide });
+            const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
+            const textGroup = new THREE.Group();
+            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.rotation.y = -textAngle - Math.PI / 2;
+            textGroup.add(textPlane);
+            scene.add(textGroup);
+            
+            const startPos = new THREE.Vector3(
+                Math.cos(startAngle) * (APOTHEM - 5.25),
+                startPlatformY + 2,
+                Math.sin(startAngle) * (APOTHEM - 5.25)
+            );
+            const endPos = new THREE.Vector3(
+                Math.cos(endAngle) * (APOTHEM - 5.25),
+                endPlatformY + 2,
+                Math.sin(endAngle) * (APOTHEM - 5.25)
+            );
+            
+            let seed = 42;
+            function rand() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            }
+            
+            let prevPos = startPos.clone();
+            for (let i = 0; i < 32; i++) {
+                let t = (i + 1) / 33; 
+                let targetPos = new THREE.Vector3().lerpVectors(startPos, endPos, t);
+                
+                targetPos.x += (rand() - 0.5) * 20;
+                targetPos.y += (rand() - 0.5) * 10;
+                targetPos.z += (rand() - 0.5) * 20;
+                
+                let r = Math.hypot(targetPos.x, targetPos.z);
+                if (r > APOTHEM - 3) { targetPos.x *= (APOTHEM - 3) / r; targetPos.z *= (APOTHEM - 3) / r; }
+                if (r < HOLE_RADIUS + 3) { targetPos.x *= (HOLE_RADIUS + 3) / r; targetPos.z *= (HOLE_RADIUS + 3) / r; }
+                
+                let dir = targetPos.clone().sub(prevPos);
+                let dist = dir.length();
+                if (dist < 0.1) dir.set(rand()-0.5, rand()-0.5, rand()-0.5).normalize();
+                else dir.normalize();
+                
+                let targetDist = 5 + rand() * 7; 
+                let pos = prevPos.clone().add(dir.multiplyScalar(targetDist));
+                
+                r = Math.hypot(pos.x, pos.z);
+                if (r > APOTHEM - 3) { pos.x *= (APOTHEM - 3) / r; pos.z *= (APOTHEM - 3) / r; }
+                if (r < HOLE_RADIUS + 3) { pos.x *= (HOLE_RADIUS + 3) / r; pos.z *= (HOLE_RADIUS + 3) / r; }
+                
+                const ball = new THREE.Mesh(new THREE.SphereGeometry(2, 16, 16), new THREE.MeshPhongMaterial({ color: ballColor }));
+                ball.position.copy(pos);
+                ball.receiveShadow = true;
+                scene.add(ball);
+                collisionObjs.push(ball);
+                
+                prevPos = pos.clone();
+            }
+        }
+
+        // SAVED STAGE 2 LOGIC
+        function buildStage2() {
+            const stageColor = 0xbafa70; // #bafa70
+            const stageStartY = 18.5;
+            const stageHeight = 15;
+            const stageEndY = stageStartY + stageHeight;
+            
+            // Walls
+            // Added flatShading: true
+            const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
+            stageTower.position.y = stageStartY + stageHeight / 2;
+            stageTower.rotation.y = Math.PI / NUM_SIDES;
+            scene.add(stageTower); collisionObjs.push(stageTower);
+            
+            // Start Platform (Index 18)
+            createPlatform(18, 18.75, stageColor);
+            
+            // End Platform (Index 10)
+            createPlatform(10, 33.25, stageColor);
+            
+            // Text on wall
+            const textMat = new THREE.MeshBasicMaterial({ map: createStage2TextTexture(), transparent: true, side: THREE.DoubleSide });
+            const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
+            const textGroup = new THREE.Group();
+            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.rotation.y = -textAngle - Math.PI / 2;
+            textGroup.add(textPlane);
+            scene.add(textGroup);
+            
+            // Middle Platform (Straight, rotated 36 degrees CCW from previous)
+            const platformY = 24.0; // 18.5 + 5 + 0.5
+            const platLen = 2 * OUTER_RADIUS + 4; // Use OUTER_RADIUS to ensure it touches the walls
+            // Previous angle was -18 deg + 90 deg = 72 deg. Adding 36 deg CCW makes it 108 deg.
+            const angle = -1 * (Math.PI * 2 / NUM_SIDES) + Math.PI / 2 + (36 * Math.PI / 180);
+            
+            const plat = new THREE.Mesh(new THREE.BoxGeometry(9, 1, platLen), new THREE.MeshPhongMaterial({ color: stageColor }));
+            plat.position.set(0, platformY, 0);
+            plat.rotation.y = angle; 
+            scene.add(plat);
+            collisionObjs.push(plat);
+            
+            // Spinning Kill Brick
+            const killBrickY = platformY + 1.5; // 1 stud above platform (which is 1 stud thick)
+            const killBrickLen = platLen;
+            const killBrickGeo = new THREE.BoxGeometry(7, 1, killBrickLen);
+            const killBrickMat = new THREE.MeshPhongMaterial({ 
+                color: 0xd9fcb1, 
+                emissive: 0xc4ff80, 
+                emissiveIntensity: 1.0 
+            });
+            const killBrick = new THREE.Mesh(killBrickGeo, killBrickMat);
+            killBrick.position.set(0, killBrickY, 0);
+            killBrick.rotation.y = angle; // Align with platform initially
+            scene.add(killBrick);
+            
+            spinningObstacles.push({
+                mesh: killBrick,
+                speed: 2.0, // Spins twice as fast
+                type: 'killbar',
+                y: killBrickY,
+                x: 0,
+                z: 0,
+                halfLen: killBrickLen / 2,
+                halfWidth: 3.5
+            });
+        }
+
+        // NEW STAGE 3 LOGIC
+        function createTruss(color) {
+            const trussGroup = new THREE.Group();
+            const mat = new THREE.MeshPhongMaterial({ color });
+            const s = 0.25, l = 2, p = 1; 
+            
+            const stickGeoms = {
+                x: new THREE.BoxGeometry(l, s, s),
+                y: new THREE.BoxGeometry(s, l, s),
+                z: new THREE.BoxGeometry(s, s, l)
+            };
+            
+            const positions = [
+                { x: 0, y: -p, z: -p, axis: 'x' }, { x: 0, y: -p, z: p, axis: 'x' },
+                { x: 0, y: p, z: -p, axis: 'x' }, { x: 0, y: p, z: p, axis: 'x' },
+                { x: -p, y: -p, z: 0, axis: 'z' }, { x: p, y: -p, z: 0, axis: 'z' },
+                { x: -p, y: p, z: 0, axis: 'z' }, { x: p, y: p, z: 0, axis: 'z' },
+                { x: -p, y: 0, z: -p, axis: 'y' }, { x: -p, y: 0, z: p, axis: 'y' },
+                { x: p, y: 0, z: -p, axis: 'y' }, { x: p, y: 0, z: p, axis: 'y' }
+            ];
+            
+            positions.forEach(pos => {
+                const mesh = new THREE.Mesh(stickGeoms[pos.axis], mat);
+                mesh.position.set(pos.x, pos.y, pos.z);
+                mesh.receiveShadow = true; // Only receives shadows
+                trussGroup.add(mesh);
+                collisionObjs.push(mesh);
+                ladderObjs.push(mesh);
+            });
+            
+            // Invisible core to prevent walking through
+            const invGeo = new THREE.BoxGeometry(1.5, 2, 1.5);
+            const invMat = new THREE.MeshPhongMaterial({ transparent: true, opacity: 0 });
+            const invMesh = new THREE.Mesh(invGeo, invMat);
+            trussGroup.add(invMesh);
+            collisionObjs.push(invMesh);
+            ladderObjs.push(invMesh);
+            
+            return trussGroup;
+        }
+
+        function buildStage3() {
+            const stageColor = 0xDC143C; // Crimson red
+            const stageStartY = 18.5;
+            const stageHeight = 90;
+            const stageEndY = stageStartY + stageHeight;
+            
+            // Walls
+            // Added flatShading: true
+            const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
+            stageTower.position.y = stageStartY + stageHeight / 2;
+            stageTower.rotation.y = Math.PI / NUM_SIDES;
+            scene.add(stageTower); collisionObjs.push(stageTower);
+            
+            // Start Platform (Index 18)
+            const startPlatformY = 18.75;
+            const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
+            
+            // Text on wall
+            const textMat = new THREE.MeshBasicMaterial({ map: createStage3TextTexture(), transparent: true, side: THREE.DoubleSide });
+            const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
+            const textGroup = new THREE.Group();
+            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.rotation.y = -textAngle - Math.PI / 2;
+            textGroup.add(textPlane);
+            scene.add(textGroup);
+            
+            // Truss Stacks on the back two corners of the start platform
+            // Moved 3 studs forward (X decreases by 3) and 2 studs away from center (Z increases by 2)
+            for (let i = 0; i < 8; i++) {
+                const truss1 = createTruss(stageColor);
+                truss1.position.set(1.5, 1.25 + i * 2, 6.5); // Back Left Corner
+                startPlatGroup.add(truss1);
+                
+                const truss2 = createTruss(stageColor);
+                truss2.position.set(1.5, 1.25 + i * 2, -6.5); // Back Right Corner
+                startPlatGroup.add(truss2);
+            }
+            
+            // Stair Platforms
+            const stairMat = new THREE.MeshPhongMaterial({ color: stageColor });
+            const stairGeo = new THREE.BoxGeometry(12, 1, 7); // 12 studs wide
+            
+            // Direction from Start (index 18) to End (index 8)
+            const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const endAngle = 8 * (Math.PI * 2 / NUM_SIDES);
+            const startX = Math.cos(startAngle) * (APOTHEM - STEP_DEPTH / 4);
+            const startZ = Math.sin(startAngle) * (APOTHEM - STEP_DEPTH / 4);
+            const endX = Math.cos(endAngle) * (APOTHEM - STEP_DEPTH / 4);
+            const endZ = Math.sin(endAngle) * (APOTHEM - STEP_DEPTH / 4);
+            
+            const dirX = endX - startX;
+            const dirZ = endZ - startZ;
+            const dirLen = Math.hypot(dirX, dirZ);
+            const normDirX = dirX / dirLen;
+            const normDirZ = dirZ / dirLen;
+            
+            const stairRotY = Math.atan2(normDirX, normDirZ);
+            
+            for (let i = 0; i < 8; i++) {
+                const dist = (i + 1) * 8;
+                const y = startPlatformY + 16 + i * 9;
+                const px = startX + normDirX * dist;
+                const pz = startZ + normDirZ * dist;
+                
+                const stair = new THREE.Mesh(stairGeo, stairMat);
+                stair.position.set(px, y, pz);
+                stair.rotation.y = stairRotY;
+                stair.receiveShadow = true; // Only receives shadows
+                scene.add(stair);
+                collisionObjs.push(stair);
+            }
+            
+            // New 8x8 platform 91 studs away (78 + 13)
+            const newPlatGroup = new THREE.Group();
+            const newPlatGeo = new THREE.BoxGeometry(8, 1, 8);
+            const newPlatMat = new THREE.MeshPhongMaterial({ color: stageColor });
+            const newPlat = new THREE.Mesh(newPlatGeo, newPlatMat);
+            const newPlatX = startX + normDirX * 91; // Moved 13 studs forward
+            const newPlatZ = startZ + normDirZ * 91;
+            newPlatGroup.position.set(newPlatX, startPlatformY + 0.5, newPlatZ);
+            newPlatGroup.rotation.y = stairRotY;
+            newPlatGroup.add(newPlat);
+            scene.add(newPlatGroup);
+            collisionObjs.push(newPlat);
+            
+            // 4 Static Red Kill Bricks on top of the 8x8 platform (1 stud thick)
+            const killBrickMat = new THREE.MeshPhongMaterial({ color: 0xFF0000, emissive: 0xFF0000, emissiveIntensity: 1.0 });
+            const kbGeoms = [
+                { geo: new THREE.BoxGeometry(8, 1, 1), pos: new THREE.Vector3(0, 1, -3.5), halfW: 4, halfL: 0.5 },
+                { geo: new THREE.BoxGeometry(8, 1, 1), pos: new THREE.Vector3(0, 1, 3.5), halfW: 4, halfL: 0.5 },
+                { geo: new THREE.BoxGeometry(1, 1, 8), pos: new THREE.Vector3(-3.5, 1, 0), halfW: 0.5, halfL: 4 },
+                { geo: new THREE.BoxGeometry(1, 1, 8), pos: new THREE.Vector3(3.5, 1, 0), halfW: 0.5, halfL: 4 }
+            ];
+            
+            kbGeoms.forEach(kb => {
+                const mesh = new THREE.Mesh(kb.geo, killBrickMat);
+                mesh.position.copy(kb.pos);
+                newPlatGroup.add(mesh);
+                
+                // Manually calculate world position
+                const cosRot = Math.cos(stairRotY);
+                const sinRot = Math.sin(stairRotY);
+                const worldX = newPlatX + kb.pos.x * cosRot - kb.pos.z * sinRot;
+                const worldZ = newPlatZ + kb.pos.x * sinRot + kb.pos.z * cosRot;
+                const worldY = startPlatformY + 0.5 + kb.pos.y;
+                
+                spinningObstacles.push({
+                    mesh: mesh,
+                    speed: 0,
+                    type: 'static_killbar',
+                    y: worldY,
+                    x: worldX,
+                    z: worldZ,
+                    rotY: stairRotY,
+                    halfWidth: kb.halfW,
+                    halfLen: kb.halfL
+                });
+            });
+            
+            // New 6x6 platform 1 (104 studs away: 91 + 13)
+            const newPlat2Group = new THREE.Group();
+            const newPlat2Geo = new THREE.BoxGeometry(6, 1, 6);
+            const newPlat2Mat = new THREE.MeshPhongMaterial({ color: stageColor });
+            const newPlat2 = new THREE.Mesh(newPlat2Geo, newPlat2Mat);
+            const newPlat2X = startX + normDirX * 104; // Moved 13 studs forward
+            const newPlat2Z = startZ + normDirZ * 104;
+            newPlat2Group.position.set(newPlat2X, startPlatformY + 0.5, newPlat2Z);
+            newPlat2Group.rotation.y = stairRotY;
+            newPlat2Group.add(newPlat2);
+            scene.add(newPlat2Group);
+            collisionObjs.push(newPlat2);
+            
+            // New 6x6 platform 2 (8 + 5 = 13 studs left of platform 1)
+            const newPlat3Group = new THREE.Group();
+            const newPlat3Geo = new THREE.BoxGeometry(6, 1, 6);
+            const newPlat3Mat = new THREE.MeshPhongMaterial({ color: stageColor });
+            const newPlat3 = new THREE.Mesh(newPlat3Geo, newPlat3Mat);
+            // Left direction is (normDirZ, -normDirX)
+            const leftX = normDirZ;
+            const leftZ = -normDirX;
+            const newPlat3X = newPlat2X + leftX * 13; // 8 + 5
+            const newPlat3Z = newPlat2Z + leftZ * 13;
+            newPlat3Group.position.set(newPlat3X, startPlatformY + 0.5, newPlat3Z);
+            newPlat3Group.rotation.y = stairRotY;
+            newPlat3Group.add(newPlat3);
+            scene.add(newPlat3Group);
+            collisionObjs.push(newPlat3);
+            
+            // 45 Truss Stack on the last 6x6 platform
+            const truss45Group = new THREE.Group();
+            for (let i = 0; i < 45; i++) {
+                const truss45 = createTruss(stageColor);
+                truss45.position.y = 1.25 + i * 2;
+                truss45Group.add(truss45);
+            }
+            // Top left corner local: (-3, 0.25, 3). Move forward 10 studs: Z = 3 + 10 = 13. Move 4 left: X = -3 - 4 = -7
+            truss45Group.position.set(-7, 0.25, 13);
+            newPlat3Group.add(truss45Group);
+            
+            // End Platform on the wall directly across (index 8) at top of wall
+            const endPlatformY = stageEndY - 0.25;
+            createPlatform(8, endPlatformY, stageColor);
         }
 
         function hasWallCollision(pos, dir, objs) {
@@ -1481,6 +1991,50 @@
                     camera.lookAt(focusTarget);
                 }
             }
+            
+            // Update Spinning Obstacles and Static Kill Bricks
+            spinningObstacles.forEach(obs => {
+                if (obs.speed > 0) {
+                    obs.mesh.rotation.y += dt * obs.speed;
+                }
+                
+                if (!isRagdoll && (obs.type === 'killbar' || obs.type === 'static_killbar')) {
+                    const playerFeet = playerPos.y - 5.5;
+                    const playerHead = playerPos.y;
+                    
+                    let kbBottom, kbTop;
+                    if (obs.type === 'static_killbar') {
+                        kbBottom = obs.y - 0.5;
+                        kbTop = obs.y + 0.5;
+                    } else {
+                        kbBottom = obs.y - 1.0;
+                        kbTop = obs.y + 1.0;
+                    }
+
+                    // Check Y overlap
+                    if (playerHead > kbBottom && playerFeet < kbTop) {
+                        const dx = playerPos.x - obs.x;
+                        const dz = playerPos.z - obs.z;
+                        
+                        let angle = obs.mesh.rotation.y;
+                        if (obs.type === 'killbar') {
+                            angle -= Math.PI / 4 + (5 * Math.PI / 180);
+                        } else {
+                            angle = obs.rotY; // Use pre-calculated rotation for static bricks
+                        }
+                        
+                        const cos = Math.cos(-angle);
+                        const sin = Math.sin(-angle);
+                        const localX = dx * cos - dz * sin;
+                        const localZ = dx * sin + dz * cos;
+                        
+                        // X and Z overlap (using 0.5 padding for player radius)
+                        if (Math.abs(localX) < obs.halfWidth + 0.5 && Math.abs(localZ) < obs.halfLen + 0.5) {
+                            executeRagdollRespawn();
+                        }
+                    }
+                }
+            });
             
             if(isRunning && !isMenuOpen && !isRagdoll) {
                 let d = new THREE.Vector3();
@@ -1688,8 +2242,8 @@
                     charHead.rotation.x = 0;
                     pL_Arm.rotation.z = 0;
                     pR_Arm.rotation.z = 0;
-                    pL_Leg.position.x = -0.55;
-                    pR_Leg.position.x = 0.55;
+                    pL_Leg.position.x = -0.5;
+                    pR_Leg.position.x = 0.5;
                     if (playerVel.y > 0 || !isGrounded) {
                         pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
                         pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
@@ -1702,7 +2256,6 @@
                         pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
                         pL_Leg.position.y = 2; pL_Leg.position.z = 0;
                         pR_Leg.position.y = 2; pR_Leg.position.z = 0;
-                        // Torso twist: 2 degrees clockwise when left arm forward (sw > 0)
                         charTorso.rotation.y = -sw * (2 * Math.PI / 180);
                     } else {
                         pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85;
@@ -1764,7 +2317,11 @@
                 
                 let op = THREE.MathUtils.clamp((headWorldPos.distanceTo(camera.position) - 2) / 3, 0, 1);
                 if (headWorldPos.distanceTo(camera.position) < 1.0) op = 0; 
-                charMaterials.forEach(m => { m.opacity = op; m.transparent = (op < 1); m.needsUpdate = true; });
+                charMaterials.forEach(m => { 
+                    m.opacity = op; 
+                    m.transparent = (op < 1) ? true : (m.userData.keepTransparent || false); // Fix face turning black
+                    m.needsUpdate = true; 
+                });
             }
 
             if (tapMarkerMesh && tapMarkerMesh.visible) {
