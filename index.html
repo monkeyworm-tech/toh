@@ -340,6 +340,7 @@
     <script>
         const FACE_IMAGE_URL = "https://images.weserv.nl/?url=static.wikia.nocookie.net/roblox/images/2/26/Smile.png";
         const THEME = { head: 0xffd33d, torso: 0x0096ff, skin: 0xffd33d, legs: 0x2d9b2d, gray: 0xcccccc, blue: 0x0077ff, glowOrange: 0xffa500 };
+        const WALKABLE_SLOPE_Y = Math.cos(70 * Math.PI / 180); 
         let scene, camera, renderer, clock;
         let moveKeys = { w: false, a: false, s: false, d: false, space: false };
         let playerVel = new THREE.Vector3();
@@ -404,7 +405,6 @@
         if (isMobile && !isDesktopUA) currentInputMode = 'mobile';
         if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0) currentInputMode = 'mobile';
 
-        // Climbing State Variables
         let isCurrentlyClimbing = false;
         let currentClimbDir = new THREE.Vector3(0, 0, 1);
         let walkSoundTimer = 0.3;
@@ -412,233 +412,245 @@
         let spinningObstacles = [];
 
         async function init() {
-            loadSettings();
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x88ccff);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true;
-            renderer.outputColorSpace = THREE.SRGBColorSpace; // Fix colors
-            document.body.appendChild(renderer.domElement);
-
-            ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-            scene.add(ambientLight);
-            sun = new THREE.DirectionalLight(0xffffff, 1.0);
-            sun.position.set(50, 200, 50);
-            scene.add(sun);
-
-            buildTower();
-            
-            // Ensure fonts are loaded before drawing text texture
-            await document.fonts.load('80px Orbitron');
-            await document.fonts.load('50px Orbitron');
-            buildStage3(); 
-            
-            buildCharacter();
-            setupMobileControls();
-            setupMenuLogic();
-            buildVolumeInterface();
-            buildGraphicsInterface();
-            buildCameraInterface();
-            createTrailCircles();
-            
-            setTimeout(() => {
-                if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                checkPointerLockNeeds();
-                const loader = document.getElementById('loading-screen');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
-                if (currentInputMode === 'mobile') document.getElementById('mobile-controls').style.display = 'block';
-                updateMovementModeUI();
-                isRunning = true;
-            }, 2000);
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
+            try {
+                loadSettings();
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x88ccff);
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
+                renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.shadowMap.enabled = true;
+                renderer.outputColorSpace = THREE.SRGBColorSpace;
+                document.body.appendChild(renderer.domElement);
 
-            document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement !== renderer.domElement && isRunning && !isMenuOpen) {
-                    if (isShiftLock || camDist <= FIRST_PERSON_DIST) openPauseMenu();
-                }
-            });
+                ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                scene.add(ambientLight);
+                sun = new THREE.DirectionalLight(0xffffff, 1.0);
+                sun.position.set(50, 200, 50);
+                scene.add(sun);
 
-            window.addEventListener('keydown', (e) => { 
-                if (isMobile && currentInputMode === 'mobile') {
-                    switchToPCControls();
-                    return; 
+                buildTower();
+                
+                try {
+                    await document.fonts.load('80px Orbitron');
+                    await document.fonts.load('50px Orbitron');
+                } catch(e) {
+                    console.error("Font loading failed, proceeding with fallback.", e);
                 }
-                if (!isRunning && !isMenuOpen) return;
-                const key = e.key.toLowerCase();
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    if (isMenuOpen) closePauseMenu(); else openPauseMenu();
-                    return;
-                }
-                if (isMenuOpen) {
-                    if (key === 'l') triggerLeaveSequence();
-                    if (key === 'r') triggerRespawnSequence();
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (document.getElementById('leave-confirmation-panel').style.display === 'flex') {
-                            window.location.href = "https://www.roblox.com";
-                        } else if (document.getElementById('respawn-confirmation-panel').style.display === 'flex') {
-                            executeRagdollRespawn();
-                        }
-                    }
-                    return;
-                }
-                if(key in moveKeys) moveKeys[key] = true; 
-                if(e.code==='Space') moveKeys.space=true; 
-                if(e.key === 'Shift') {
-                    if (!isShiftLockEnabled) return;
-                    isShiftLock = !isShiftLock;
-                    const mobBtn = document.getElementById('mobile-shiftlock');
-                    if (mobBtn) {
-                        if (isShiftLock) mobBtn.classList.add('active');
-                        else mobBtn.classList.remove('active');
-                    }
+                buildStage4(); 
+                
+                buildCharacter();
+                setupMobileControls();
+                setupMenuLogic();
+                buildVolumeInterface();
+                buildGraphicsInterface();
+                buildCameraInterface();
+                createTrailCircles();
+                
+                setTimeout(() => {
+                    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     checkPointerLockNeeds();
-                }
-            });
+                    const loader = document.getElementById('loading-screen');
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                    if (currentInputMode === 'mobile') document.getElementById('mobile-controls').style.display = 'block';
+                    updateMovementModeUI();
+                    isRunning = true;
+                }, 2000);
 
-            window.addEventListener('keyup', (e) => { 
-                const key = e.key.toLowerCase();
-                if(key in moveKeys) moveKeys[key] = false; 
-                if(e.code==='Space') moveKeys.space=false; 
-            });
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
 
-            window.addEventListener('mousedown', (e) => {
-                if (e.button === 2) { isRightMouseDown = true; checkPointerLockNeeds(); }
-            });
-            window.addEventListener('mouseup', (e) => {
-                if (e.button === 2) { isRightMouseDown = false; checkPointerLockNeeds(); }
-            });
-            window.addEventListener('contextmenu', e => e.preventDefault());
+                document.addEventListener('pointerlockchange', () => {
+                    if (document.pointerLockElement !== renderer.domElement && isRunning && !isMenuOpen) {
+                        if (isShiftLock || camDist <= FIRST_PERSON_DIST) openPauseMenu();
+                    }
+                });
 
-            document.addEventListener('mousemove', (e) => { 
-                if (!isRunning || isMenuOpen) return;
-                const hasLock = document.pointerLockElement === renderer.domElement;
-                if (hasLock || isRightMouseDown) { 
-                    const sens = 0.003 * cameraSensitivityValue;
-                    camYaw -= e.movementX * sens; 
-                    camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * sens, -1.5, 1.5);
-                } 
-            });
-
-            document.addEventListener('touchstart', (e) => {
-                if (isMobile && currentInputMode === 'pc') {
-                    const target = e.target;
-                    if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle')) {
-                        switchToMobileControls();
+                window.addEventListener('keydown', (e) => { 
+                    if (isMobile && currentInputMode === 'mobile') {
+                        switchToPCControls();
                         return; 
                     }
-                }
-                if (!isRunning || isMenuOpen) return;
-                const joyRect = document.getElementById('joystick-container').getBoundingClientRect();
-                const jumpRect = document.getElementById('jump-button').getBoundingClientRect();
-                const lockRect = document.getElementById('mobile-shiftlock').getBoundingClientRect();
-                const topMenuRect = document.getElementById('roblox-menu-btn').getBoundingClientRect();
-                const dZoneRect = document.getElementById('dynamic-joystick-zone').getBoundingClientRect();
+                    if (!isRunning && !isMenuOpen) return;
+                    const key = e.key.toLowerCase();
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        if (isMenuOpen) closePauseMenu(); else openPauseMenu();
+                        return;
+                    }
+                    if (isMenuOpen) {
+                        if (key === 'l') triggerLeaveSequence();
+                        if (key === 'r') triggerRespawnSequence();
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (document.getElementById('leave-confirmation-panel').style.display === 'flex') {
+                                window.location.href = "https://www.roblox.com";
+                            } else if (document.getElementById('respawn-confirmation-panel').style.display === 'flex') {
+                                executeRagdollRespawn();
+                            }
+                        }
+                        return;
+                    }
+                    if(key in moveKeys) moveKeys[key] = true; 
+                    if(e.code==='Space') moveKeys.space=true; 
+                    if(e.key === 'Shift') {
+                        if (!isShiftLockEnabled) return;
+                        isShiftLock = !isShiftLock;
+                        const mobBtn = document.getElementById('mobile-shiftlock');
+                        if (mobBtn) {
+                            if (isShiftLock) mobBtn.classList.add('active');
+                            else mobBtn.classList.remove('active');
+                        }
+                        checkPointerLockNeeds();
+                    }
+                });
 
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const t = e.changedTouches[i];
-                    const isInsideJoystick = (currentMovementMode === 'classic' && t.clientX >= joyRect.left && t.clientX <= joyRect.right && t.clientY >= joyRect.top && t.clientY <= joyRect.bottom);
-                    const isInsideDynamicZone = (currentMovementMode === 'dynamic' && t.clientX >= dZoneRect.left && t.clientX <= dZoneRect.right && t.clientY >= dZoneRect.top && t.clientY <= dZoneRect.bottom);
-                    const isInsideJump = (t.clientX >= jumpRect.left && t.clientX <= jumpRect.right && t.clientY >= jumpRect.top && t.clientY <= jumpRect.bottom);
-                    const isInsideLock = (t.clientX >= lockRect.left && t.clientX <= lockRect.right && t.clientY >= lockRect.top && t.clientY <= lockRect.bottom);
-                    const isInsideTopMenu = (t.clientX >= topMenuRect.left && t.clientX <= topMenuRect.right && t.clientY >= topMenuRect.top && t.clientY <= topMenuRect.bottom);
-                    if (isInsideJoystick || isInsideDynamicZone || isInsideJump || isInsideLock || isInsideTopMenu) continue; 
-                    if (cameraTouches.length < 2) cameraTouches.push({ id: t.identifier, lastX: t.clientX, lastY: t.clientY });
-                }
-                if (cameraTouches.length === 2) {
-                    let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
-                    let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
-                    if (t1 && t2) {
-                        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-                        initialCamDist = camDist;
+                window.addEventListener('keyup', (e) => { 
+                    const key = e.key.toLowerCase();
+                    if(key in moveKeys) moveKeys[key] = false; 
+                    if(e.code==='Space') moveKeys.space=false; 
+                });
+
+                window.addEventListener('mousedown', (e) => {
+                    if (e.button === 2) { isRightMouseDown = true; checkPointerLockNeeds(); }
+                });
+                window.addEventListener('mouseup', (e) => {
+                    if (e.button === 2) { isRightMouseDown = false; checkPointerLockNeeds(); }
+                });
+                window.addEventListener('contextmenu', e => e.preventDefault());
+
+                document.addEventListener('mousemove', (e) => { 
+                    if (!isRunning || isMenuOpen) return;
+                    const hasLock = document.pointerLockElement === renderer.domElement;
+                    if (hasLock || isRightMouseDown) { 
+                        const sens = 0.003 * cameraSensitivityValue;
+                        camYaw -= e.movementX * sens; 
+                        camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * sens, -1.5, 1.5);
+                    } 
+                });
+
+                document.addEventListener('touchstart', (e) => {
+                    if (isMobile && currentInputMode === 'pc') {
+                        const target = e.target;
+                        if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle')) {
+                            switchToMobileControls();
+                            return; 
+                        }
+                    }
+                    if (!isRunning || isMenuOpen) return;
+                    const joyRect = document.getElementById('joystick-container').getBoundingClientRect();
+                    const jumpRect = document.getElementById('jump-button').getBoundingClientRect();
+                    const lockRect = document.getElementById('mobile-shiftlock').getBoundingClientRect();
+                    const topMenuRect = document.getElementById('roblox-menu-btn').getBoundingClientRect();
+                    const dZoneRect = document.getElementById('dynamic-joystick-zone').getBoundingClientRect();
+
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const t = e.changedTouches[i];
+                        const isInsideJoystick = (currentMovementMode === 'classic' && t.clientX >= joyRect.left && t.clientX <= joyRect.right && t.clientY >= joyRect.top && t.clientY <= joyRect.bottom);
+                        const isInsideDynamicZone = (currentMovementMode === 'dynamic' && t.clientX >= dZoneRect.left && t.clientX <= dZoneRect.right && t.clientY >= dZoneRect.top && t.clientY <= dZoneRect.bottom);
+                        const isInsideJump = (t.clientX >= jumpRect.left && t.clientX <= jumpRect.right && t.clientY >= jumpRect.top && t.clientY <= jumpRect.bottom);
+                        const isInsideLock = (t.clientX >= lockRect.left && t.clientX <= lockRect.right && t.clientY >= lockRect.top && t.clientY <= lockRect.bottom);
+                        const isInsideTopMenu = (t.clientX >= topMenuRect.left && t.clientX <= topMenuRect.right && t.clientY >= topMenuRect.top && t.clientY <= topMenuRect.bottom);
+                        if (isInsideJoystick || isInsideDynamicZone || isInsideJump || isInsideLock || isInsideTopMenu) continue; 
+                        if (cameraTouches.length < 2) cameraTouches.push({ id: t.identifier, lastX: t.clientX, lastY: t.clientY });
+                    }
+                    if (cameraTouches.length === 2) {
+                        let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
+                        let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
+                        if (t1 && t2) {
+                            initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                            initialCamDist = camDist;
                     }
                 }
-            }, { passive: false });
+                }, { passive: false });
 
-            document.addEventListener('touchmove', (e) => {
-                if (!isRunning || isMenuOpen) return;
-                if (cameraTouches.length === 2 && initialPinchDist !== null) {
-                    let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
-                    let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
-                    if (t1 && t2) {
-                        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-                        const factor = initialPinchDist / currentDist;
-                        const targetCamDist = initialCamDist * factor;
-                        const diff = targetCamDist - initialCamDist;
-                        camDist = THREE.MathUtils.clamp(initialCamDist + diff * 1.5, 0.1, 80);
+                document.addEventListener('touchmove', (e) => {
+                    if (!isRunning || isMenuOpen) return;
+                    if (cameraTouches.length === 2 && initialPinchDist !== null) {
+                        let t1 = findCameraTouch(cameraTouches[0].id, e.touches);
+                        let t2 = findCameraTouch(cameraTouches[1].id, e.touches);
+                        if (t1 && t2) {
+                            const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                            const factor = initialPinchDist / currentDist;
+                            const targetCamDist = initialCamDist * factor;
+                            const diff = targetCamDist - initialCamDist;
+                            camDist = THREE.MathUtils.clamp(initialCamDist + diff * 1.5, 0.1, 80);
+                        }
+                        return;
                     }
-                    return;
-                }
-                if (cameraTouches.length === 1) {
-                    let t = findCameraTouch(cameraTouches[0].id, e.touches);
-                    let cache = cameraTouches[0];
-                    if (t) {
-                        const sens = 0.006 * cameraSensitivityValue;
-                        camYaw -= (t.clientX - cache.lastX) * sens;
-                        camPitch = THREE.MathUtils.clamp(camPitch + (t.clientY - cache.lastY) * sens, -1.5, 1.5);
-                        cache.lastX = t.clientX; cache.lastY = t.clientY;
+                    if (cameraTouches.length === 1) {
+                        let t = findCameraTouch(cameraTouches[0].id, e.touches);
+                        let cache = cameraTouches[0];
+                        if (t) {
+                            const sens = 0.006 * cameraSensitivityValue;
+                            camYaw -= (t.clientX - cache.lastX) * sens;
+                            camPitch = THREE.MathUtils.clamp(camPitch + (t.clientY - cache.lastY) * sens, -1.5, 1.5);
+                            cache.lastX = t.clientX; cache.lastY = t.clientY;
+                        }
                     }
-                }
-            }, { passive: false });
+                }, { passive: false });
 
-            const clearCameraTouches = (e) => {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const id = e.changedTouches[i].identifier;
-                    cameraTouches = cameraTouches.filter(ct => ct.id !== id);
-                }
-                if (cameraTouches.length < 2) initialPinchDist = null;
-            };
-            document.addEventListener('touchend', clearCameraTouches);
-            document.addEventListener('touchcancel', clearCameraTouches);
+                const clearCameraTouches = (e) => {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const id = e.changedTouches[i].identifier;
+                        cameraTouches = cameraTouches.filter(ct => ct.id !== id);
+                    }
+                    if (cameraTouches.length < 2) initialPinchDist = null;
+                };
+                document.addEventListener('touchend', clearCameraTouches);
+                document.addEventListener('touchcancel', clearCameraTouches);
 
-            window.addEventListener('wheel', (e) => {
-                if(isRunning && !isMenuOpen) {
-                    camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.05, 0.1, 80);
-                    checkPointerLockNeeds();
-                }
-            }, { passive: true });
+                window.addEventListener('wheel', (e) => {
+                    if(isRunning && !isMenuOpen) {
+                        camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.05, 0.1, 80);
+                        checkPointerLockNeeds();
+                    }
+                }, { passive: true });
 
-            window.addEventListener('touchstart', (e) => {
-                if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
-                const target = e.target;
-                if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock')) return;
-                const touch = e.changedTouches[0];
-                const mouse = new THREE.Vector2((touch.clientX / window.innerWidth) * 2 - 1, -(touch.clientY / window.innerHeight) * 2 + 1);
-                const raycaster = new THREE.Raycaster();
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(collisionObjs);
-                if (intersects.length > 0) {
-                    tapTargetPos = intersects[0].point.clone();
-                    createTapMarker(tapTargetPos);
-                }
-            }, { passive: true });
+                window.addEventListener('touchstart', (e) => {
+                    if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
+                    const target = e.target;
+                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock') & !target.closest('#shiftlock-toggle')) return;
+                    const touch = e.changedTouches[0];
+                    const mouse = new THREE.Vector2((touch.clientX / window.innerWidth) * 2 - 1, -(touch.clientY / window.innerHeight) * 2 + 1);
+                    const raycaster = new THREE.Raycaster();
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(collisionObjs);
+                    if (intersects.length > 0) {
+                        tapTargetPos = intersects[0].point.clone();
+                        createTapMarker(tapTargetPos);
+                    }
+                }, { passive: true });
 
-            window.addEventListener('mousedown', (e) => {
-                if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning || e.button !== 0) return;
-                const target = e.target;
-                if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu')) return;
-                const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
-                const raycaster = new THREE.Raycaster();
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(collisionObjs);
-                if (intersects.length > 0) {
-                    tapTargetPos = intersects[0].point.clone();
-                    createTapMarker(tapTargetPos);
-                }
-            });
+                window.addEventListener('mousedown', (e) => {
+                    if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning || e.button !== 0) return;
+                    const target = e.target;
+                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu')) return;
+                    const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+                    const raycaster = new THREE.Raycaster();
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(collisionObjs);
+                    if (intersects.length > 0) {
+                        tapTargetPos = intersects[0].point.clone();
+                        createTapMarker(tapTargetPos);
+                    }
+                });
 
-            clock = new THREE.Clock();
-            loop();
+                clock = new THREE.Clock();
+                loop();
+            } catch (error) {
+                console.error("Initialization Error:", error);
+                const loader = document.getElementById('loading-screen');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
+            }
         }
 
         function loadSettings() {
@@ -784,7 +796,7 @@
             scene.traverse((object) => {
                 if (object.isMesh) {
                     if (level > 1) {
-                        object.castShadow = false; // Only player casts shadows
+                        object.castShadow = false; 
                         object.receiveShadow = true;
                     } else {
                         object.castShadow = false;
@@ -794,7 +806,6 @@
                 }
             });
             
-            // Ensure player character casts shadows
             if (level > 1 && charGroup) {
                 charGroup.traverse((obj) => {
                     if (obj.isMesh) {
@@ -950,7 +961,7 @@
         function animateMenuButton(isOpening) {
             const svg = document.querySelector('#roblox-menu-btn svg');
             svg.style.animation = 'none';
-            svg.offsetHeight; // trigger reflow
+            svg.offsetHeight; 
             svg.style.animation = isOpening ? 'spinGrow 0.4s ease forwards' : 'spinShrink 0.4s ease forwards';
         }
 
@@ -1077,10 +1088,10 @@
             setTimeout(() => { df.style.opacity = '0'; }, 200);
 
             const partsToBreak = [
-                { obj: charHead, offset: new THREE.Vector3(0, 4.75, 0) },
+                { obj: charHead, offset: new THREE.Vector3(0, 4.5, 0) }, // Moved down 0.1
                 { obj: charTorso, offset: new THREE.Vector3(0, 3, 0) },
-                { obj: pL_Arm, offset: new THREE.Vector3(-1.5, 4, 0) },
-                { obj: pR_Arm, offset: new THREE.Vector3(1.5, 4, 0) },
+                { obj: pL_Arm, offset: new THREE.Vector3(-1.5, 3.5, 0) },
+                { obj: pR_Arm, offset: new THREE.Vector3(1.5, 3.5, 0) },
                 { obj: pL_Leg, offset: new THREE.Vector3(-0.5, 2, 0) },
                 { obj: pR_Leg, offset: new THREE.Vector3(0.5, 2, 0) }
             ];
@@ -1098,10 +1109,10 @@
             });
 
             setTimeout(() => {
-                charGroup.add(charHead); charHead.position.set(0, 4.75, 0); charHead.rotation.set(0,0,0);
+                charGroup.add(charHead); charHead.position.set(0, 4.5, 0); charHead.rotation.set(0,0,0); // Moved down 0.1
                 charGroup.add(charTorso); charTorso.position.set(0, 3, 0); charTorso.rotation.set(0,0,0);
-                charGroup.add(pL_Arm); pL_Arm.position.set(-1.5, 4, 0); pL_Arm.rotation.set(0,0,0);
-                charGroup.add(pR_Arm); pR_Arm.position.set(1.5, 4, 0); pR_Arm.rotation.set(0,0,0);
+                charGroup.add(pL_Arm); pL_Arm.position.set(-1.5, 3.5, 0); pL_Arm.rotation.set(0,0,0);
+                charGroup.add(pR_Arm); pR_Arm.position.set(1.5, 3.5, 0); pR_Arm.rotation.set(0,0,0);
                 charGroup.add(pL_Leg); pL_Leg.position.set(-0.5, 2, 0); pL_Leg.rotation.set(0,0,0);
                 charGroup.add(pR_Leg); pR_Leg.position.set(0.5, 2, 0); pR_Leg.rotation.set(0,0,0);
                 
@@ -1138,7 +1149,8 @@
                 circle.style.position = 'absolute';
                 circle.style.width = '12px'; circle.style.height = '12px';
                 circle.style.background = 'rgba(255, 255, 255, 0.6)';
-                circle.style.borderRadius = '50%'; circle.style.pointerEvents = 'none';
+                circle.style.borderRadius = '50%'; 
+                circle.style.pointerEvents = 'none';
                 circle.style.display = 'none'; circle.style.zIndex = '27';
                 circle.style.transform = 'translate(-50%, -50%)';
                 document.body.appendChild(circle);
@@ -1309,15 +1321,32 @@
             });
         }
 
-        function createBevelPart(w, h, d, color) {
-            const b = 0.08; const s = new THREE.Shape(); const x = -w/2, y = -h/2;
-            s.moveTo(x+b, y); s.lineTo(x+w-b, y); s.quadraticCurveTo(x+w, y, x+w, y+b);
-            s.lineTo(x+w, y+h-b); s.quadraticCurveTo(x+w, y+h, x+w-b, y+h);
-            s.lineTo(x+b, y+h); s.quadraticCurveTo(x, y+h, x, y+h-b);
-            s.lineTo(x, y+b); s.quadraticCurveTo(x, y, x+b, y);
-            const g = new THREE.ExtrudeGeometry(s, { depth: d-(b*2), bevelEnabled: true, bevelSize: b, bevelThickness: b, bevelSegments: 2 });
-            g.center(); const m = new THREE.MeshStandardMaterial({ color, roughness: 0.55, transparent: true });
-            charMaterials.push(m); return new THREE.Mesh(g, m);
+        // Corrected createRoundedBoxGeometry to ensure exact final dimensions
+        function createRoundedBoxGeometry(w, h, d, r) {
+            const sw = w - r * 2;
+            const sh = h - r * 2;
+            const shape = new THREE.Shape();
+            const x = -sw / 2, y = -sh / 2;
+            shape.moveTo(x, y + r);
+            shape.lineTo(x, y + sh - r);
+            shape.quadraticCurveTo(x, y + sh, x + r, y + sh);
+            shape.lineTo(x + sw - r, y + sh);
+            shape.quadraticCurveTo(x + sw, y + sh, x + sw, y + sh - r);
+            shape.lineTo(x + sw, y + r);
+            shape.quadraticCurveTo(x + sw, y, x + sw - r, y);
+            shape.lineTo(x + r, y);
+            shape.quadraticCurveTo(x, y, x, y + r);
+
+            const geo = new THREE.ExtrudeGeometry(shape, {
+                depth: d - r * 2,
+                bevelEnabled: true,
+                bevelThickness: r,
+                bevelSize: r,
+                bevelSegments: 2,
+                curveSegments: 4
+            });
+            geo.center();
+            return geo;
         }
         
         function makeBeveledCylinder(radius, height, bevel, radialSegments, bevelSegments) {
@@ -1355,14 +1384,18 @@
         function buildCharacter() {
             charGroup = new THREE.Group();
             
+            // --- HEAD ---
+            const headRadius = 0.6;
+            const headHeight = 1.2;
+            const headBevel = 0.3; // Changed from 0.25 to 0.3
             const headMat = new THREE.MeshStandardMaterial({ color: THEME.head, roughness: 0.55, transparent: true });
             charMaterials.push(headMat); 
-            charHead = new THREE.Mesh(makeBeveledCylinder(0.75, 1.5, 0.36, 32, 8), headMat); 
-            charHead.position.y = 4.75;
+            charHead = new THREE.Mesh(makeBeveledCylinder(headRadius, headHeight, headBevel, 32, 8), headMat); 
+            charHead.position.y = 4.5; // Moved down 0.1 from 4.6
             charHead.castShadow = true;
+            charHead.receiveShadow = true;
             
-            // Face texture setup from STUDS code
-            const faceGeo = new THREE.CylinderGeometry(0.755, 0.755, 1.4, 32, 1, true, Math.PI * 1.65, Math.PI * 0.7);
+            const faceGeo = new THREE.CylinderGeometry(headRadius + 0.005, headRadius + 0.005, headHeight - 0.1, 32, 1, true, Math.PI * 1.65, Math.PI * 0.7);
             const loader = new THREE.TextureLoader();
             loader.crossOrigin = "Anonymous";
             const faceTexture = loader.load(FACE_IMAGE_URL, (tex) => {
@@ -1376,31 +1409,50 @@
             faceTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
             const faceMat = new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true, depthWrite: false, side: THREE.DoubleSide });
-            faceMat.userData.keepTransparent = true; // Prevent opacity loop from breaking transparency
-            charMaterials.push(faceMat); // Add to charMaterials for opacity fade
+            faceMat.userData.keepTransparent = true; 
+            charMaterials.push(faceMat); 
             const face = new THREE.Mesh(faceGeo, faceMat);
-            face.position.set(0, 0, 0); // Local to charHead
-            charHead.add(face); // Attach to head so it moves during climb animation
+            face.position.set(0, 0, 0); 
+            charHead.add(face); 
             
             charGroup.add(charHead);
 
-            // STUDS Body Parts (Exact Dimensions and Positions)
-            charTorso = createBevelPart(2, 2, 1, THEME.torso); 
-            charTorso.position.y = 3; 
+            // --- TORSO AND LIMBS ---
+            const matTorso = new THREE.MeshStandardMaterial({ color: THEME.torso, roughness: 0.55, transparent: true });
+            const matArm   = new THREE.MeshStandardMaterial({ color: THEME.skin, roughness: 0.55, transparent: true });
+            const matLeg   = new THREE.MeshStandardMaterial({ color: THEME.legs, roughness: 0.55, transparent: true });
+            charMaterials.push(matTorso, matArm, matLeg);
+
+            // Torso: width=2, height=2, depth=1, bevel changed to 0.04
+            const torsoGeo = createRoundedBoxGeometry(2, 2, 1, 0.04);
+            charTorso = new THREE.Mesh(torsoGeo, matTorso);
+            charTorso.position.y = 3;
+            charTorso.castShadow = true;
+            charTorso.receiveShadow = true;
             charGroup.add(charTorso);
-            
-            const addLimb = (x, y, color) => {
-                const p = new THREE.Group(); p.position.set(x, y, 0);
-                const m = createBevelPart(1, 2, 1, color); 
-                m.position.y = -1; // Shift down so the group rotates around the top (shoulder/hip)
+
+            // Limbs: width=1, height=2, depth=1, bevel changed to 0.04
+            const limbGeo = createRoundedBoxGeometry(1, 2, 1, 0.04);
+            limbGeo.translate(0, -1, 0); 
+
+            const addLimb = (x, y, mat, pivotShift = 0) => {
+                const p = new THREE.Group(); 
+                p.position.set(x, y - pivotShift, 0);
+                
+                const m = new THREE.Mesh(limbGeo, mat); 
+                m.position.y = pivotShift; 
+                m.castShadow = true;
+                m.receiveShadow = true;
                 p.add(m); 
                 charGroup.add(p); 
                 return p;
             };
-            pL_Arm = addLimb(-1.5, 4, THEME.skin); 
-            pR_Arm = addLimb(1.5, 4, THEME.skin);
-            pL_Leg = addLimb(-0.5, 2, THEME.legs); 
-            pR_Leg = addLimb(0.5, 2, THEME.legs);
+            
+            pL_Arm = addLimb(-1.5, 4, matArm, 0.5); 
+            pR_Arm = addLimb(1.5, 4, matArm, 0.5);
+            pL_Leg = addLimb(-0.5, 2, matLeg); 
+            pR_Leg = addLimb(0.5, 2, matLeg);
+
             scene.add(charGroup);
         }
 
@@ -1468,9 +1520,27 @@
             return new THREE.CanvasTexture(canvas);
         }
 
+        function createStage4TextTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#E6F7FF'; 
+            
+            ctx.font = '80px Orbitron, sans-serif';
+            ctx.fillText('FLAMES', 512, 200);
+            
+            ctx.font = '50px Orbitron, sans-serif';
+            ctx.fillText('NEODYMIUMCHEESE', 512, 280);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
         function buildTower() {
             const TOWER_HEIGHT = 18.5;
-            // Added flatShading: true to make walls look like individual parts
             const tower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, TOWER_HEIGHT, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: THEME.gray, side: THREE.DoubleSide, flatShading: true }));
             tower.position.y = TOWER_HEIGHT / 2; tower.rotation.y = Math.PI / NUM_SIDES; 
             scene.add(tower); collisionObjs.push(tower);
@@ -1558,7 +1628,6 @@
             return platGroup;
         }
 
-        // SAVED STAGE 1 LOGIC
         function buildStage1() {
             const stageColor = 0x90D5FF;
             const ballColor = 0x90D5FF; 
@@ -1570,7 +1639,6 @@
             const stageEndY = endPlatformY + 0.25;
             const stageHeight = stageEndY - stageStartY;
             
-            // Added flatShading: true
             const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
             stageTower.position.y = stageStartY + stageHeight / 2;
             stageTower.rotation.y = Math.PI / NUM_SIDES;
@@ -1640,27 +1708,20 @@
             }
         }
 
-        // SAVED STAGE 2 LOGIC
         function buildStage2() {
-            const stageColor = 0xbafa70; // #bafa70
+            const stageColor = 0xbafa70; 
             const stageStartY = 18.5;
             const stageHeight = 15;
             const stageEndY = stageStartY + stageHeight;
             
-            // Walls
-            // Added flatShading: true
             const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
             stageTower.position.y = stageStartY + stageHeight / 2;
             stageTower.rotation.y = Math.PI / NUM_SIDES;
             scene.add(stageTower); collisionObjs.push(stageTower);
             
-            // Start Platform (Index 18)
             createPlatform(18, 18.75, stageColor);
-            
-            // End Platform (Index 10)
             createPlatform(10, 33.25, stageColor);
             
-            // Text on wall
             const textMat = new THREE.MeshBasicMaterial({ map: createStage2TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
@@ -1670,10 +1731,8 @@
             textGroup.add(textPlane);
             scene.add(textGroup);
             
-            // Middle Platform (Straight, rotated 36 degrees CCW from previous)
-            const platformY = 24.0; // 18.5 + 5 + 0.5
-            const platLen = 2 * OUTER_RADIUS + 4; // Use OUTER_RADIUS to ensure it touches the walls
-            // Previous angle was -18 deg + 90 deg = 72 deg. Adding 36 deg CCW makes it 108 deg.
+            const platformY = 24.0; 
+            const platLen = 2 * OUTER_RADIUS + 4; 
             const angle = -1 * (Math.PI * 2 / NUM_SIDES) + Math.PI / 2 + (36 * Math.PI / 180);
             
             const plat = new THREE.Mesh(new THREE.BoxGeometry(9, 1, platLen), new THREE.MeshPhongMaterial({ color: stageColor }));
@@ -1682,8 +1741,7 @@
             scene.add(plat);
             collisionObjs.push(plat);
             
-            // Spinning Kill Brick
-            const killBrickY = platformY + 1.5; // 1 stud above platform (which is 1 stud thick)
+            const killBrickY = platformY + 1.5; 
             const killBrickLen = platLen;
             const killBrickGeo = new THREE.BoxGeometry(7, 1, killBrickLen);
             const killBrickMat = new THREE.MeshPhongMaterial({ 
@@ -1693,12 +1751,12 @@
             });
             const killBrick = new THREE.Mesh(killBrickGeo, killBrickMat);
             killBrick.position.set(0, killBrickY, 0);
-            killBrick.rotation.y = angle; // Align with platform initially
+            killBrick.rotation.y = angle; 
             scene.add(killBrick);
             
             spinningObstacles.push({
                 mesh: killBrick,
-                speed: 2.0, // Spins twice as fast
+                speed: 2.0, 
                 type: 'killbar',
                 y: killBrickY,
                 x: 0,
@@ -1708,7 +1766,6 @@
             });
         }
 
-        // NEW STAGE 3 LOGIC
         function createTruss(color) {
             const trussGroup = new THREE.Group();
             const mat = new THREE.MeshPhongMaterial({ color });
@@ -1732,13 +1789,12 @@
             positions.forEach(pos => {
                 const mesh = new THREE.Mesh(stickGeoms[pos.axis], mat);
                 mesh.position.set(pos.x, pos.y, pos.z);
-                mesh.receiveShadow = true; // Only receives shadows
+                mesh.receiveShadow = true; 
                 trussGroup.add(mesh);
                 collisionObjs.push(mesh);
                 ladderObjs.push(mesh);
             });
             
-            // Invisible core to prevent walking through
             const invGeo = new THREE.BoxGeometry(1.5, 2, 1.5);
             const invMat = new THREE.MeshPhongMaterial({ transparent: true, opacity: 0 });
             const invMesh = new THREE.Mesh(invGeo, invMat);
@@ -1750,23 +1806,19 @@
         }
 
         function buildStage3() {
-            const stageColor = 0xDC143C; // Crimson red
+            const stageColor = 0xDC143C; 
             const stageStartY = 18.5;
             const stageHeight = 90;
             const stageEndY = stageStartY + stageHeight;
             
-            // Walls
-            // Added flatShading: true
             const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
             stageTower.position.y = stageStartY + stageHeight / 2;
             stageTower.rotation.y = Math.PI / NUM_SIDES;
             scene.add(stageTower); collisionObjs.push(stageTower);
             
-            // Start Platform (Index 18)
             const startPlatformY = 18.75;
             const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
             
-            // Text on wall
             const textMat = new THREE.MeshBasicMaterial({ map: createStage3TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
@@ -1776,23 +1828,19 @@
             textGroup.add(textPlane);
             scene.add(textGroup);
             
-            // Truss Stacks on the back two corners of the start platform
-            // Moved 3 studs forward (X decreases by 3) and 2 studs away from center (Z increases by 2)
             for (let i = 0; i < 8; i++) {
                 const truss1 = createTruss(stageColor);
-                truss1.position.set(1.5, 1.25 + i * 2, 6.5); // Back Left Corner
+                truss1.position.set(1.5, 1.25 + i * 2, 6.5); 
                 startPlatGroup.add(truss1);
                 
                 const truss2 = createTruss(stageColor);
-                truss2.position.set(1.5, 1.25 + i * 2, -6.5); // Back Right Corner
+                truss2.position.set(1.5, 1.25 + i * 2, -6.5); 
                 startPlatGroup.add(truss2);
             }
             
-            // Stair Platforms
             const stairMat = new THREE.MeshPhongMaterial({ color: stageColor });
-            const stairGeo = new THREE.BoxGeometry(12, 1, 7); // 12 studs wide
+            const stairGeo = new THREE.BoxGeometry(12, 1, 7); 
             
-            // Direction from Start (index 18) to End (index 8)
             const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
             const endAngle = 8 * (Math.PI * 2 / NUM_SIDES);
             const startX = Math.cos(startAngle) * (APOTHEM - STEP_DEPTH / 4);
@@ -1817,17 +1865,16 @@
                 const stair = new THREE.Mesh(stairGeo, stairMat);
                 stair.position.set(px, y, pz);
                 stair.rotation.y = stairRotY;
-                stair.receiveShadow = true; // Only receives shadows
+                stair.receiveShadow = true; 
                 scene.add(stair);
                 collisionObjs.push(stair);
             }
             
-            // New 8x8 platform 91 studs away (78 + 13)
             const newPlatGroup = new THREE.Group();
             const newPlatGeo = new THREE.BoxGeometry(8, 1, 8);
             const newPlatMat = new THREE.MeshPhongMaterial({ color: stageColor });
             const newPlat = new THREE.Mesh(newPlatGeo, newPlatMat);
-            const newPlatX = startX + normDirX * 91; // Moved 13 studs forward
+            const newPlatX = startX + normDirX * 91; 
             const newPlatZ = startZ + normDirZ * 91;
             newPlatGroup.position.set(newPlatX, startPlatformY + 0.5, newPlatZ);
             newPlatGroup.rotation.y = stairRotY;
@@ -1835,7 +1882,6 @@
             scene.add(newPlatGroup);
             collisionObjs.push(newPlat);
             
-            // 4 Static Red Kill Bricks on top of the 8x8 platform (1 stud thick)
             const killBrickMat = new THREE.MeshPhongMaterial({ color: 0xFF0000, emissive: 0xFF0000, emissiveIntensity: 1.0 });
             const kbGeoms = [
                 { geo: new THREE.BoxGeometry(8, 1, 1), pos: new THREE.Vector3(0, 1, -3.5), halfW: 4, halfL: 0.5 },
@@ -1849,7 +1895,6 @@
                 mesh.position.copy(kb.pos);
                 newPlatGroup.add(mesh);
                 
-                // Manually calculate world position
                 const cosRot = Math.cos(stairRotY);
                 const sinRot = Math.sin(stairRotY);
                 const worldX = newPlatX + kb.pos.x * cosRot - kb.pos.z * sinRot;
@@ -1869,12 +1914,11 @@
                 });
             });
             
-            // New 6x6 platform 1 (104 studs away: 91 + 13)
             const newPlat2Group = new THREE.Group();
             const newPlat2Geo = new THREE.BoxGeometry(6, 1, 6);
             const newPlat2Mat = new THREE.MeshPhongMaterial({ color: stageColor });
             const newPlat2 = new THREE.Mesh(newPlat2Geo, newPlat2Mat);
-            const newPlat2X = startX + normDirX * 104; // Moved 13 studs forward
+            const newPlat2X = startX + normDirX * 104; 
             const newPlat2Z = startZ + normDirZ * 104;
             newPlat2Group.position.set(newPlat2X, startPlatformY + 0.5, newPlat2Z);
             newPlat2Group.rotation.y = stairRotY;
@@ -1882,15 +1926,13 @@
             scene.add(newPlat2Group);
             collisionObjs.push(newPlat2);
             
-            // New 6x6 platform 2 (8 + 5 = 13 studs left of platform 1)
             const newPlat3Group = new THREE.Group();
             const newPlat3Geo = new THREE.BoxGeometry(6, 1, 6);
             const newPlat3Mat = new THREE.MeshPhongMaterial({ color: stageColor });
             const newPlat3 = new THREE.Mesh(newPlat3Geo, newPlat3Mat);
-            // Left direction is (normDirZ, -normDirX)
             const leftX = normDirZ;
             const leftZ = -normDirX;
-            const newPlat3X = newPlat2X + leftX * 13; // 8 + 5
+            const newPlat3X = newPlat2X + leftX * 13; 
             const newPlat3Z = newPlat2Z + leftZ * 13;
             newPlat3Group.position.set(newPlat3X, startPlatformY + 0.5, newPlat3Z);
             newPlat3Group.rotation.y = stairRotY;
@@ -1898,20 +1940,145 @@
             scene.add(newPlat3Group);
             collisionObjs.push(newPlat3);
             
-            // 45 Truss Stack on the last 6x6 platform
             const truss45Group = new THREE.Group();
             for (let i = 0; i < 45; i++) {
                 const truss45 = createTruss(stageColor);
                 truss45.position.y = 1.25 + i * 2;
                 truss45Group.add(truss45);
             }
-            // Top left corner local: (-3, 0.25, 3). Move forward 10 studs: Z = 3 + 10 = 13. Move 4 left: X = -3 - 4 = -7
-            truss45Group.position.set(-7, 0.25, 13);
+            truss45Group.position.set(1, 0.25, 13);
             newPlat3Group.add(truss45Group);
             
-            // End Platform on the wall directly across (index 8) at top of wall
             const endPlatformY = stageEndY - 0.25;
             createPlatform(8, endPlatformY, stageColor);
+        }
+
+        function createCustomPlatform(color) {
+            const shape = new THREE.Shape();
+            const halfW = 2; 
+            const rectLen = 10; 
+            const triLen = 2; 
+
+            shape.moveTo(-rectLen - triLen, 0);
+            shape.lineTo(-rectLen, -halfW);
+            shape.lineTo(rectLen, -halfW);
+            shape.lineTo(rectLen + triLen, 0);
+            shape.lineTo(rectLen, halfW);
+            shape.lineTo(-rectLen, halfW);
+            shape.lineTo(-rectLen - triLen, 0);
+
+            const geo = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false });
+            geo.center();
+            geo.rotateX(-Math.PI / 2); 
+            const mat = new THREE.MeshPhongMaterial({ color, flatShading: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        function buildStage4() {
+            const stageColor = 0xf55f02; 
+            const stageStartY = 18.5;
+            const stageHeight = 46;
+            const stageEndY = stageStartY + stageHeight;
+            
+            const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
+            stageTower.position.y = stageStartY + stageHeight / 2;
+            stageTower.rotation.y = Math.PI / NUM_SIDES;
+            scene.add(stageTower); collisionObjs.push(stageTower);
+            
+            const startPlatformY = 18.75;
+            const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
+            
+            const textMat = new THREE.MeshBasicMaterial({ map: createStage4TextTexture(), transparent: true, side: THREE.DoubleSide });
+            const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
+            const textGroup = new THREE.Group();
+            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.rotation.y = -textAngle - Math.PI / 2;
+            textGroup.add(textPlane);
+            scene.add(textGroup);
+            
+            const endPlatformY = stageEndY - 0.25;
+            const endPlatGroup = createPlatform(8, endPlatformY, stageColor);
+            
+            for (let i = 0; i < 10; i++) {
+                const truss = createTruss(stageColor);
+                truss.position.set(-5, -1.25 - i * 2, 0); 
+                endPlatGroup.add(truss);
+            }
+            
+            const underPlatGeo = new THREE.BoxGeometry(4, 1, 12); 
+            const underPlatMat = new THREE.MeshPhongMaterial({ color: stageColor, flatShading: true });
+            const underPlat = new THREE.Mesh(underPlatGeo, underPlatMat);
+            underPlat.position.set(-7, -20.75, 0); 
+            underPlat.receiveShadow = true;
+            endPlatGroup.add(underPlat);
+            collisionObjs.push(underPlat);
+
+            const customPlat1 = createCustomPlatform(stageColor);
+            customPlat1.position.set(-22, 5.75, 0);
+            customPlat1.rotation.y = 0;
+            customPlat1.rotation.z = -15 * Math.PI / 180; 
+            startPlatGroup.add(customPlat1);
+            collisionObjs.push(customPlat1);
+
+            const customPlat2 = createCustomPlatform(stageColor);
+            customPlat2.position.set(-41, 10.75, -5);
+            customPlat2.rotation.y = 0;
+            customPlat2.rotation.z = -30 * Math.PI / 180; 
+            startPlatGroup.add(customPlat2);
+            collisionObjs.push(customPlat2);
+
+            const customPlat3 = createCustomPlatform(stageColor);
+            customPlat3.position.set(-51, 10.75, 5); 
+            customPlat3.rotation.y = 15 * Math.PI / 180; 
+            customPlat3.rotation.z = -15 * Math.PI / 180; 
+            startPlatGroup.add(customPlat3);
+            collisionObjs.push(customPlat3);
+
+            const customPlat4 = createCustomPlatform(stageColor);
+            customPlat4.position.set(-51, 10.75, -15); 
+            customPlat4.rotation.y = -45 * Math.PI / 180; 
+            customPlat4.rotation.z = -30 * Math.PI / 180; 
+            startPlatGroup.add(customPlat4);
+            collisionObjs.push(customPlat4);
+
+            const customPlat5 = createCustomPlatform(stageColor);
+            customPlat5.position.set(-60, 9.75, 0);
+            customPlat5.rotation.y = 0;
+            customPlat5.rotation.z = -45 * Math.PI / 180; 
+            startPlatGroup.add(customPlat5);
+            collisionObjs.push(customPlat5);
+
+            const customPlat6 = createCustomPlatform(stageColor);
+            customPlat6.position.set(-60, 9.75, -14);
+            customPlat6.rotation.y = -15 * Math.PI / 180; 
+            customPlat6.rotation.z = -45 * Math.PI / 180; 
+            startPlatGroup.add(customPlat6);
+            collisionObjs.push(customPlat6);
+
+            const customPlat7 = createCustomPlatform(stageColor);
+            customPlat7.position.set(-77, 15.75, -5); 
+            customPlat7.rotation.set(0, 0, 0);
+            customPlat7.rotation.z = -15 * Math.PI / 180;
+            startPlatGroup.add(customPlat7);
+            collisionObjs.push(customPlat7);
+
+            const customPlat8 = createCustomPlatform(stageColor);
+            customPlat8.position.set(-87, 15.75, 25); 
+            customPlat8.rotation.set(0, 0, 0);
+            customPlat8.rotation.z = -15 * Math.PI / 180;
+            startPlatGroup.add(customPlat8);
+            collisionObjs.push(customPlat8);
+
+            const customPlat9 = createCustomPlatform(stageColor);
+            customPlat9.position.set(-98, 25.75, 0); 
+            customPlat9.rotation.y = 0;
+            customPlat9.rotation.z = -45 * Math.PI / 180; 
+            startPlatGroup.add(customPlat9);
+            collisionObjs.push(customPlat9);
         }
 
         function hasWallCollision(pos, dir, objs) {
@@ -1927,7 +2094,16 @@
                 for (let origin of origins) {
                     wallRay.set(new THREE.Vector3(origin.x, y, origin.z), dir);
                     wallRay.far = 0.8;
-                    if (wallRay.intersectObjects(objs).length > 0) return true;
+                    const hits = wallRay.intersectObjects(objs);
+                    if (hits.length > 0) {
+                        const hit = hits[0];
+                        if (hit.face) {
+                            const normal = hit.face.normal.clone();
+                            normal.transformDirection(hit.object.matrixWorld);
+                            if (normal.y > WALKABLE_SLOPE_Y) continue; 
+                        }
+                        return true;
+                    }
                 }
             }
             return false;
@@ -1948,6 +2124,12 @@
                 wallRay.far = 1.5; 
                 const hits = wallRay.intersectObjects(objs);
                 if (hits.length > 0) {
+                    const hit = hits[0];
+                    if (hit.face) {
+                        const normal = hit.face.normal.clone();
+                        normal.transformDirection(hit.object.matrixWorld);
+                        if (normal.y > WALKABLE_SLOPE_Y) continue; 
+                    }
                     const hitObj = hits[0].object;
                     const bb = new THREE.Box3().setFromObject(hitObj);
                     const topY = bb.max.y;
@@ -1992,7 +2174,6 @@
                 }
             }
             
-            // Update Spinning Obstacles and Static Kill Bricks
             spinningObstacles.forEach(obs => {
                 if (obs.speed > 0) {
                     obs.mesh.rotation.y += dt * obs.speed;
@@ -2011,7 +2192,6 @@
                         kbTop = obs.y + 1.0;
                     }
 
-                    // Check Y overlap
                     if (playerHead > kbBottom && playerFeet < kbTop) {
                         const dx = playerPos.x - obs.x;
                         const dz = playerPos.z - obs.z;
@@ -2020,7 +2200,7 @@
                         if (obs.type === 'killbar') {
                             angle -= Math.PI / 4 + (5 * Math.PI / 180);
                         } else {
-                            angle = obs.rotY; // Use pre-calculated rotation for static bricks
+                            angle = obs.rotY; 
                         }
                         
                         const cos = Math.cos(-angle);
@@ -2028,7 +2208,6 @@
                         const localX = dx * cos - dz * sin;
                         const localZ = dx * sin + dz * cos;
                         
-                        // X and Z overlap (using 0.5 padding for player radius)
                         if (Math.abs(localX) < obs.halfWidth + 0.5 && Math.abs(localZ) < obs.halfLen + 0.5) {
                             executeRagdollRespawn();
                         }
@@ -2075,7 +2254,14 @@
                         wallRay.far = 1.2;
                         const hits = wallRay.intersectObjects(collisionObjs);
                         if (hits.length > 0) {
-                            const hitObj = hits[0].object;
+                            const hit = hits[0];
+                            const hitObj = hit.object;
+                            
+                            if (hit.face) {
+                                const normal = hit.face.normal.clone().transformDirection(hitObj.matrixWorld);
+                                if (normal.y > WALKABLE_SLOPE_Y) { stillClimbing = false; break; }
+                            }
+                            
                             const bb = new THREE.Box3().setFromObject(hitObj);
                             const topY = bb.max.y;
                             const size = new THREE.Vector3(); bb.getSize(size);
@@ -2142,7 +2328,14 @@
                         wallRay.far = 1.2;
                         const hits = wallRay.intersectObjects(collisionObjs);
                         if (hits.length > 0) {
-                            const hitObj = hits[0].object;
+                            const hit = hits[0];
+                            const hitObj = hit.object;
+                            
+                            if (hit.face) {
+                                const normal = hit.face.normal.clone().transformDirection(hitObj.matrixWorld);
+                                if (normal.y > WALKABLE_SLOPE_Y) continue; 
+                            }
+                            
                             const bb = new THREE.Box3().setFromObject(hitObj);
                             const topY = bb.max.y;
                             const size = new THREE.Vector3(); bb.getSize(size);
@@ -2204,10 +2397,9 @@
                     }
                 }
 
-                // --- Animation Update ---
                 if (isCurrentlyClimbing) {
                     charGroup.rotation.y = Math.atan2(currentClimbDir.x, currentClimbDir.z);
-                    charTorso.position.z = -0.5// Moved back 1 stud to original position
+                    charTorso.position.z = -0.5
                     charHead.position.z = -0.5; 
                     charHead.rotation.x = -15 * (Math.PI / 180); 
                     pL_Arm.rotation.x = -Math.PI / 2 + Math.sin(animTimer) * (Math.PI / 4); 
@@ -2265,7 +2457,6 @@
                     }
                 }
 
-                // --- Jump Logic ---
                 if (moveKeys.space) {
                     if (isCurrentlyClimbing) {
                         playerVel.y = 62.6;
@@ -2319,7 +2510,7 @@
                 if (headWorldPos.distanceTo(camera.position) < 1.0) op = 0; 
                 charMaterials.forEach(m => { 
                     m.opacity = op; 
-                    m.transparent = (op < 1) ? true : (m.userData.keepTransparent || false); // Fix face turning black
+                    m.transparent = (op < 1) ? true : (m.userData.keepTransparent || false); 
                     m.needsUpdate = true; 
                 });
             }
@@ -2328,25 +2519,6 @@
                 tapMarkerMesh.scale.addScalar(dt * 2.0);
                 tapMarkerMesh.material.opacity -= dt * 2.0;
                 if (tapMarkerMesh.material.opacity <= 0) tapMarkerMesh.visible = false;
-            }
-
-            if (!isRunning && clock.getOldTime() === 0) {
-                setTimeout(async () => {
-                    const cloudAvatar = await loadAvatarFromCloud('current_user_id');
-                    if (cloudAvatar) {
-                        Object.keys(cloudAvatar).forEach(part => {
-                            if (THEME[part] !== undefined) THEME[part] = cloudAvatar[part];
-                        });
-                    }
-                    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    checkPointerLockNeeds();
-                    const loader = document.getElementById('loading-screen');
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 500);
-                    if (currentInputMode === 'mobile') document.getElementById('mobile-controls').style.display = 'block';
-                    updateMovementModeUI();
-                    isRunning = true;
-                }, 2000);
             }
 
             renderer.render(scene, camera);
