@@ -92,6 +92,160 @@
         }
         #roblox-menu-btn svg { width: 36px; height: 36px; fill: #ffffff; }
 
+        /* Top Bar Menu */
+        #top-bar-menu {
+            position: absolute; top: 20px; left: 80px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            background: rgb(0, 0, 0);
+            border-radius: 25px;
+            z-index: 50;
+            pointer-events: auto;
+            overflow: hidden;
+            padding: 0 5px;
+            gap: 5px;
+        }
+        .top-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .top-btn .hover-bg {
+            position: absolute;
+            width: 32px; 
+            height: 32px;
+            background: rgba(128, 128, 128, 0.4);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+            z-index: 0;
+        }
+        .top-btn:hover .hover-bg { opacity: 1; }
+        .top-btn svg { position: relative; z-index: 1; width: 24px; height: 24px; }
+
+        /* Button 1 active state */
+        #tb-btn-1 .icon-close { display: none; }
+        #tb-btn-1.active .icon-menu { display: none; }
+        #tb-btn-1.active .icon-close { display: block; }
+        #tb-btn-1.active .hover-bg { opacity: 1; background: rgba(128, 128, 128, 0.4); }
+        #tb-btn-1.active:hover .hover-bg { background: rgba(128, 128, 128, 0.6); }
+
+        /* Button 2 active state */
+        #tb-btn-2 .tb2-bubble { fill: none; stroke: white; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        #tb-btn-2 .tb2-line { stroke: white; stroke-width: 2; stroke-linecap: round; }
+        #tb-btn-2.active .tb2-bubble { fill: white; stroke: white; }
+        #tb-btn-2.active .tb2-line { stroke: black; }
+
+        /* Button 3 active state */
+        #tb-btn-3 .mic-pill { fill: none; stroke: white; stroke-width: 2; }
+        #tb-btn-3 .mic-stand { fill: white; }
+        #tb-btn-3 .mic-slash { stroke: red; stroke-width: 2.5; stroke-linecap: round; }
+        #tb-btn-3.active .mic-pill { fill: white; }
+        #tb-btn-3.active .mic-stand { fill: #00ff00; }
+        #tb-btn-3.active .mic-slash { display: none; }
+
+        /* Dropdown Menu */
+        #dropdown-menu {
+            position: absolute; 
+            top: 80px; 
+            left: 20px;
+            width: 200px; 
+            background: rgb(0, 0, 0);
+            border-radius: 12px;
+            z-index: 49;
+            overflow: hidden;
+            padding: 5px;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #dropdown-menu.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .dd-item {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .dd-item:hover {
+            background: rgba(128, 128, 128, 0.4);
+        }
+        .dd-icon {
+            width: 24px; height: 24px;
+            fill: none; stroke: white; stroke-width: 2;
+            stroke-linecap: round; stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .dd-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Leaderboard */
+        #leaderboard {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 60;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'Open Sans', sans-serif;
+            opacity: 0;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+        #leaderboard.active { opacity: 1; pointer-events: auto; }
+        
+        #leaderboard.desktop {
+            top: 80px; right: 20px; 
+            width: 300px;
+            transform: translateX(50px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #leaderboard.desktop.active { transform: translateX(0); }
+
+        #leaderboard.phone {
+            top: 50%; left: 50%;
+            width: 90%; max-width: 780px; height: 520px;
+            transform: translate(-50%, -50%) scale(0.8);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #leaderboard.phone.active { transform: translate(-50%, -50%) scale(1); }
+
+        #lb-close-btn {
+            position: absolute; top: 10px; left: 10px;
+            width: 24px; height: 24px; cursor: pointer;
+        }
+        #lb-close-btn svg { width: 100%; height: 100%; }
+
+        #lb-header {
+            display: flex; justify-content: space-between;
+            padding-left: 40px; margin-bottom: 15px;
+            font-size: 14px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6); 
+        }
+        .lb-row {
+            display: flex; justify-content: space-between;
+            padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9); 
+        }
+
         #pause-menu {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.9); opacity: 0;
@@ -221,6 +375,86 @@
             <rect x="25" y="25" width="50" height="50" transform="rotate(15 50 50)" />
             <rect x="41" y="41" width="18" height="18" fill="#000000" transform="rotate(15 50 50)" />
         </svg>
+    </div>
+
+    <div id="top-bar-menu">
+        <div class="top-btn" id="tb-btn-1">
+            <div class="hover-bg"></div>
+            <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+        </div>
+        <div class="top-btn" id="tb-btn-2">
+            <div class="hover-bg"></div>
+            <svg viewBox="0 0 24 24">
+                <path class="tb2-bubble" d="M4 3 H20 A1 1 0 0 1 21 4 V15 A1 1 0 0 1 20 16 H15 L12 20 L9 16 H4 A1 1 0 0 1 3 15 V4 A1 1 0 0 1 4 3 Z" />
+                <line class="tb2-line" x1="7" y1="8" x2="17" y2="8" />
+                <line class="tb2-line" x1="7" y1="12" x2="12" y2="12" />
+            </svg>
+        </div>
+        <div class="top-btn" id="tb-btn-3">
+            <div class="hover-bg"></div>
+            <svg viewBox="0 0 24 24">
+                <defs>
+                    <clipPath id="mic-clip">
+                        <path d="M12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2Z" />
+                    </clipPath>
+                </defs>
+                <path class="mic-pill" d="M12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2Z" />
+                <rect class="mic-green" x="8" y="14" width="8" height="0" fill="#00ff00" clip-path="url(#mic-clip)" />
+                <path class="mic-stand" d="M17 11C17 13.76 14.76 16 12 16C9.24 16 7 13.76 7 11H5C5 14.53 7.61 17.43 11 17.92V21H13V17.92C16.39 17.43 19 14.53 19 11H17Z" />
+                <line class="mic-slash" x1="4" y1="20" x2="20" y2="4" />
+            </svg>
+        </div>
+    </div>
+
+    <div id="dropdown-menu">
+        <div class="dd-item" id="dd-leaderboard">
+            <svg class="dd-icon" viewBox="0 0 24 24">
+                <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
+            </svg>
+            <span class="dd-text">Leaderboard</span>
+        </div>
+        <div class="dd-item" id="dd-inventory">
+            <svg class="dd-icon" viewBox="0 0 24 24">
+                <path d="M9 3h6a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM9 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+                <path d="M9 14h6M9 10h6" />
+            </svg>
+            <span class="dd-text">Inventory</span>
+        </div>
+        <div class="dd-item" id="dd-respawn">
+            <svg class="dd-icon" viewBox="0 0 24 24">
+                <circle cx="10" cy="8" r="4" />
+                <path d="M2 21v-1a7 7 0 0 1 14 0v1" />
+                <path d="M18 14a4 4 0 1 1 3-1M21 10v3h-3" />
+            </svg>
+            <span class="dd-text">Respawn</span>
+        </div>
+    </div>
+
+    <div id="leaderboard">
+        <div id="lb-close-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+        </div>
+        <div id="lb-header">
+            <span class="lb-h-left">People</span>
+            <span class="lb-h-right">Level</span>
+        </div>
+        <div id="lb-body">
+            <div class="lb-row">
+                <span class="lb-r-left">Player</span>
+                <span class="lb-r-right">1</span>
+            </div>
+        </div>
     </div>
 
     <div id="pause-menu">
@@ -411,6 +645,11 @@
         let climbSoundTimer = 0.4;
         let spinningObstacles = [];
 
+        // Mic State Variables
+        let micAudioContext, micAnalyser, microphoneStream, micDataArray;
+        let micActive = false;
+        let micGreenRect;
+
         async function init() {
             try {
                 loadSettings();
@@ -443,6 +682,7 @@
                 buildCharacter();
                 setupMobileControls();
                 setupMenuLogic();
+                setupTopBarLogic();
                 buildVolumeInterface();
                 buildGraphicsInterface();
                 buildCameraInterface();
@@ -537,7 +777,7 @@
                 document.addEventListener('touchstart', (e) => {
                     if (isMobile && currentInputMode === 'pc') {
                         const target = e.target;
-                        if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle')) {
+                        if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle') && !target.closest('#top-bar-menu') && !target.closest('#dropdown-menu') && !target.closest('#leaderboard')) {
                             switchToMobileControls();
                             return; 
                         }
@@ -615,7 +855,7 @@
                 window.addEventListener('touchstart', (e) => {
                     if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
                     const target = e.target;
-                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock') & !target.closest('#shiftlock-toggle')) return;
+                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock') || target.closest('#top-bar-menu') || target.closest('#dropdown-menu') || target.closest('#leaderboard')) return;
                     const touch = e.changedTouches[0];
                     const mouse = new THREE.Vector2((touch.clientX / window.innerWidth) * 2 - 1, -(touch.clientY / window.innerHeight) * 2 + 1);
                     const raycaster = new THREE.Raycaster();
@@ -630,7 +870,7 @@
                 window.addEventListener('mousedown', (e) => {
                     if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning || e.button !== 0) return;
                     const target = e.target;
-                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu')) return;
+                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#top-bar-menu') || target.closest('#dropdown-menu') || target.closest('#leaderboard')) return;
                     const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
                     const raycaster = new THREE.Raycaster();
                     raycaster.setFromCamera(mouse, camera);
@@ -1038,6 +1278,103 @@
             document.getElementById('confirm-respawn-yes').addEventListener('click', executeRagdollRespawn);
         }
 
+        function setupTopBarLogic() {
+            micGreenRect = document.querySelector('#tb-btn-3 .mic-green');
+            const btn1 = document.getElementById('tb-btn-1');
+            const btn2 = document.getElementById('tb-btn-2');
+            const dropdown = document.getElementById('dropdown-menu');
+
+            btn1.addEventListener('click', () => {
+                const isActive = btn1.classList.toggle('active');
+                if (isActive) {
+                    dropdown.classList.add('visible');
+                } else {
+                    dropdown.classList.remove('visible');
+                }
+            });
+
+            btn2.addEventListener('click', () => {
+                const isActive = btn2.classList.toggle('active');
+                if (isActive) {
+                    // If chat opens, close the 3-line menu
+                    btn1.classList.remove('active');
+                    dropdown.classList.remove('visible');
+                }
+            });
+
+            document.getElementById('dd-leaderboard').addEventListener('click', () => {
+                const lb = document.getElementById('leaderboard');
+                const isPhone = /iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent) || (isMobile && Math.min(window.innerWidth, window.innerHeight) < 600);
+                
+                lb.classList.remove('desktop', 'phone', 'active');
+                void lb.offsetWidth; // Trigger reflow
+                
+                if (isPhone) {
+                    lb.classList.add('phone');
+                } else {
+                    lb.classList.add('desktop');
+                }
+                lb.classList.add('active');
+                
+                // Close dropdown
+                btn1.classList.remove('active');
+                dropdown.classList.remove('visible');
+            });
+
+            document.getElementById('lb-close-btn').addEventListener('click', () => {
+                document.getElementById('leaderboard').classList.remove('active');
+            });
+
+            document.getElementById('dd-respawn').addEventListener('click', () => {
+                triggerRespawnSequence();
+                // Close dropdown
+                btn1.classList.remove('active');
+                dropdown.classList.remove('visible');
+            });
+
+            document.getElementById('tb-btn-3').addEventListener('click', async (e) => {
+                const btn = e.currentTarget;
+                if (!micActive) {
+                    try {
+                        microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const source = micAudioContext.createMediaStreamSource(microphoneStream);
+                        micAnalyser = micAudioContext.createAnalyser();
+                        micAnalyser.fftSize = 256;
+                        source.connect(micAnalyser);
+                        micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+                        micActive = true;
+                        btn.classList.add('active');
+                        updateMicVisuals();
+                    } catch (err) {
+                        console.error("Mic access denied", err);
+                    }
+                } else {
+                    if (microphoneStream) microphoneStream.getTracks().forEach(t => t.stop());
+                    if (micAudioContext) await micAudioContext.close();
+                    micActive = false;
+                    btn.classList.remove('active');
+                    micGreenRect.setAttribute('height', 0);
+                    micGreenRect.setAttribute('y', 14);
+                }
+            });
+        }
+
+        function updateMicVisuals() {
+            if (!micActive) return;
+            requestAnimationFrame(updateMicVisuals);
+            micAnalyser.getByteFrequencyData(micDataArray);
+            let sum = 0;
+            for(let i = 0; i < micDataArray.length; i++) sum += micDataArray[i];
+            let avg = sum / micDataArray.length;
+            let volume = avg / 255; 
+            volume = Math.min(1, Math.max(0, volume * 3.0)); 
+            const greenHeight = volume * 12;
+            const greenY = 14 - greenHeight;
+            micGreenRect.setAttribute('y', greenY);
+            micGreenRect.setAttribute('height', greenHeight);
+        }
+
         function openPauseMenu() {
             if (isRagdoll || !isRunning) return;
             isMenuOpen = true;
@@ -1088,7 +1425,7 @@
             setTimeout(() => { df.style.opacity = '0'; }, 200);
 
             const partsToBreak = [
-                { obj: charHead, offset: new THREE.Vector3(0, 4.5, 0) }, // Moved down 0.1
+                { obj: charHead, offset: new THREE.Vector3(0, 4.5, 0) }, 
                 { obj: charTorso, offset: new THREE.Vector3(0, 3, 0) },
                 { obj: pL_Arm, offset: new THREE.Vector3(-1.5, 3.5, 0) },
                 { obj: pR_Arm, offset: new THREE.Vector3(1.5, 3.5, 0) },
@@ -1109,7 +1446,7 @@
             });
 
             setTimeout(() => {
-                charGroup.add(charHead); charHead.position.set(0, 4.5, 0); charHead.rotation.set(0,0,0); // Moved down 0.1
+                charGroup.add(charHead); charHead.position.set(0, 4.5, 0); charHead.rotation.set(0,0,0); 
                 charGroup.add(charTorso); charTorso.position.set(0, 3, 0); charTorso.rotation.set(0,0,0);
                 charGroup.add(pL_Arm); pL_Arm.position.set(-1.5, 3.5, 0); pL_Arm.rotation.set(0,0,0);
                 charGroup.add(pR_Arm); pR_Arm.position.set(1.5, 3.5, 0); pR_Arm.rotation.set(0,0,0);
@@ -1321,7 +1658,6 @@
             });
         }
 
-        // Corrected createRoundedBoxGeometry to ensure exact final dimensions
         function createRoundedBoxGeometry(w, h, d, r) {
             const sw = w - r * 2;
             const sh = h - r * 2;
@@ -1384,14 +1720,13 @@
         function buildCharacter() {
             charGroup = new THREE.Group();
             
-            // --- HEAD ---
             const headRadius = 0.6;
             const headHeight = 1.2;
-            const headBevel = 0.3; // Changed from 0.25 to 0.3
+            const headBevel = 0.3; 
             const headMat = new THREE.MeshStandardMaterial({ color: THEME.head, roughness: 0.55, transparent: true });
             charMaterials.push(headMat); 
             charHead = new THREE.Mesh(makeBeveledCylinder(headRadius, headHeight, headBevel, 32, 8), headMat); 
-            charHead.position.y = 4.5; // Moved down 0.1 from 4.6
+            charHead.position.y = 4.5; 
             charHead.castShadow = true;
             charHead.receiveShadow = true;
             
@@ -1417,13 +1752,11 @@
             
             charGroup.add(charHead);
 
-            // --- TORSO AND LIMBS ---
             const matTorso = new THREE.MeshStandardMaterial({ color: THEME.torso, roughness: 0.55, transparent: true });
             const matArm   = new THREE.MeshStandardMaterial({ color: THEME.skin, roughness: 0.55, transparent: true });
             const matLeg   = new THREE.MeshStandardMaterial({ color: THEME.legs, roughness: 0.55, transparent: true });
             charMaterials.push(matTorso, matArm, matLeg);
 
-            // Torso: width=2, height=2, depth=1, bevel changed to 0.04
             const torsoGeo = createRoundedBoxGeometry(2, 2, 1, 0.04);
             charTorso = new THREE.Mesh(torsoGeo, matTorso);
             charTorso.position.y = 3;
@@ -1431,7 +1764,6 @@
             charTorso.receiveShadow = true;
             charGroup.add(charTorso);
 
-            // Limbs: width=1, height=2, depth=1, bevel changed to 0.04
             const limbGeo = createRoundedBoxGeometry(1, 2, 1, 0.04);
             limbGeo.translate(0, -1, 0); 
 
@@ -2484,13 +2816,31 @@
                     if (cHHits.length > 0 && cHHits[0].distance < 0.9) playerVel.y = 0;
                 }
 
+                // Fixed ground collision with multiple raycasts
                 if(!isCurrentlyClimbing) {
                     isGrounded = false;
-                    floorRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 2, playerPos.z), new THREE.Vector3(0,-1,0));
-                    const fHits = floorRay.intersectObjects(collisionObjs);
-                    if(playerVel.y <= 0) {
+                    const rayOriginY = playerPos.y - 2;
+                    const origins = [
+                        new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z),
+                        new THREE.Vector3(playerPos.x - 0.5, rayOriginY, playerPos.z),
+                        new THREE.Vector3(playerPos.x + 0.5, rayOriginY, playerPos.z),
+                        new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z + 0.5),
+                        new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z - 0.5)
+                    ];
+                    let highestPoint = null;
+                    for (let i = 0; i < origins.length; i++) {
+                        floorRay.set(origins[i], new THREE.Vector3(0,-1,0));
+                        const fHits = floorRay.intersectObjects(collisionObjs);
                         if (fHits.length > 0 && fHits[0].distance < 4.0) {
-                            playerPos.y = fHits[0].point.y + 5.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
+                            if (!highestPoint || fHits[0].point.y > highestPoint.y) {
+                                highestPoint = fHits[0].point;
+                            }
+                        }
+                    }
+                    
+                    if(playerVel.y <= 0) {
+                        if (highestPoint) {
+                            playerPos.y = highestPoint.y + 5.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
                         } else if (playerPos.y <= 6.5) {
                             playerPos.y = 6.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
                         }
