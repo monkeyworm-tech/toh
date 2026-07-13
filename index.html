@@ -267,7 +267,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px;
             position: relative;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         #inv-search {
             background: rgba(255, 255, 255, 0.1);
@@ -275,7 +275,7 @@
             position: absolute;
         }
         .inv-slot {
-            background: rgba(128, 128, 128, 0.3);
+            background: rgba(25, 25, 25, 0.9); /* Same shade as box */
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 4px;
             position: relative;
@@ -286,34 +286,34 @@
             font-size: 10px; color: rgba(255,255,255,0.5);
         }
 
-        /* Inventory Desktop */
+        /* Inventory Desktop (1.5x scale) */
         #inventory.desktop #inv-box {
-            width: 500px; height: 250px;
+            width: 750px; height: 340px;
         }
         #inventory.desktop #inv-search {
-            width: 150px; height: 30px;
+            width: 225px; height: 45px;
             top: 10px; right: 10px;
         }
         #inventory.desktop #inv-slots {
-            display: flex; gap: 5px;
+            display: flex; gap: 6px;
         }
         #inventory.desktop .inv-slot {
-            width: 45px; height: 45px;
+            width: 68px; height: 68px;
         }
 
-        /* Inventory Phone */
+        /* Inventory Phone (1.5x scale) */
         #inventory.phone #inv-box {
-            width: 150px; height: 100px;
+            width: 224px; height: 136px;
         }
         #inventory.phone #inv-search {
-            width: 130px; height: 20px;
-            top: 5px; left: 10px;
+            width: 194px; height: 30px;
+            top: 5px; left: 15px;
         }
         #inventory.phone #inv-slots {
-            display: flex; gap: 5px;
+            display: flex; gap: 6px;
         }
         #inventory.phone .inv-slot {
-            width: 45px; height: 45px;
+            width: 68px; height: 68px;
         }
 
         #pause-menu {
@@ -978,8 +978,9 @@
                     }
                 });
 
-                // Click outside to close Leaderboard on Phone
-                const closeLbOutside = (e) => {
+                // Click outside to close Leaderboard & Inventory
+                const closeOverlayOutside = (e) => {
+                    // Leaderboard (Phone only)
                     const lb = document.getElementById('leaderboard');
                     const ddLb = document.getElementById('dd-leaderboard');
                     if (checkPhone() && lb.classList.contains('active')) {
@@ -987,9 +988,17 @@
                             lb.classList.remove('active');
                         }
                     }
+                    // Inventory (All devices)
+                    const inv = document.getElementById('inventory');
+                    const ddInv = document.getElementById('dd-inventory');
+                    if (inv.classList.contains('active')) {
+                        if (!inv.contains(e.target) && !ddInv.contains(e.target)) {
+                            inv.classList.remove('active');
+                        }
+                    }
                 };
-                document.addEventListener('mousedown', closeLbOutside);
-                document.addEventListener('touchstart', closeLbOutside);
+                document.addEventListener('mousedown', closeOverlayOutside);
+                document.addEventListener('touchstart', closeOverlayOutside);
 
                 clock = new THREE.Clock();
                 loop();
@@ -1465,6 +1474,11 @@
             const lb = document.getElementById('leaderboard');
             const isPhone = checkPhone();
             
+            if (lb.classList.contains('active')) {
+                lb.classList.remove('active');
+                return;
+            }
+
             lb.classList.remove('desktop', 'phone', 'active');
             void lb.offsetWidth; 
             
