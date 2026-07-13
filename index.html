@@ -220,7 +220,7 @@
 
         #leaderboard.phone {
             top: 50%; left: 50%;
-            width: 90%; max-width: 780px; height: 520px;
+            width: 85%; max-width: 450px; height: 350px;
             transform: translate(-50%, -50%) scale(0.8);
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
@@ -234,9 +234,8 @@
 
         #lb-header {
             display: flex; justify-content: space-between;
-            padding-left: 40px; margin-bottom: 15px;
+            padding-left: 20px; padding-right: 10px; margin-bottom: 15px;
             font-size: 14px; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 1px;
             color: rgba(255, 255, 255, 0.6); 
         }
         .lb-row {
@@ -244,6 +243,77 @@
             padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1);
             font-size: 16px;
             color: rgba(255, 255, 255, 0.9); 
+            padding-left: 20px; padding-right: 10px;
+        }
+
+        /* Inventory */
+        #inventory {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            z-index: 60;
+            pointer-events: none;
+        }
+        #inventory.active {
+            display: flex;
+            pointer-events: auto;
+        }
+        #inv-box {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            position: relative;
+            margin-bottom: 5px;
+        }
+        #inv-search {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            position: absolute;
+        }
+        .inv-slot {
+            background: rgba(128, 128, 128, 0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            position: relative;
+        }
+        .slot-num {
+            position: absolute;
+            top: 2px; right: 4px;
+            font-size: 10px; color: rgba(255,255,255,0.5);
+        }
+
+        /* Inventory Desktop */
+        #inventory.desktop #inv-box {
+            width: 500px; height: 250px;
+        }
+        #inventory.desktop #inv-search {
+            width: 150px; height: 30px;
+            top: 10px; right: 10px;
+        }
+        #inventory.desktop #inv-slots {
+            display: flex; gap: 5px;
+        }
+        #inventory.desktop .inv-slot {
+            width: 45px; height: 45px;
+        }
+
+        /* Inventory Phone */
+        #inventory.phone #inv-box {
+            width: 150px; height: 100px;
+        }
+        #inventory.phone #inv-search {
+            width: 130px; height: 20px;
+            top: 5px; left: 10px;
+        }
+        #inventory.phone #inv-slots {
+            display: flex; gap: 5px;
+        }
+        #inventory.phone .inv-slot {
+            width: 45px; height: 45px;
         }
 
         #pause-menu {
@@ -260,6 +330,9 @@
         }
         #pause-menu.open {
             display: flex; transform: translate(-50%, -50%) scale(1); opacity: 1;
+        }
+        @media (max-width: 600px) {
+            #pause-menu { width: 90%; max-width: 500px; height: 400px; padding: 15px; }
         }
 
         .settings-workspace {
@@ -457,6 +530,13 @@
         </div>
     </div>
 
+    <div id="inventory">
+        <div id="inv-box">
+            <div id="inv-search"></div>
+        </div>
+        <div id="inv-slots"></div>
+    </div>
+
     <div id="pause-menu">
         <div class="settings-workspace">
             <div class="settings-sidebar">
@@ -650,6 +730,10 @@
         let micActive = false;
         let micGreenRect;
 
+        function checkPhone() {
+            return /iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent) || (isMobile && Math.min(window.innerWidth, window.innerHeight) < 600);
+        }
+
         async function init() {
             try {
                 loadSettings();
@@ -683,6 +767,7 @@
                 setupMobileControls();
                 setupMenuLogic();
                 setupTopBarLogic();
+                buildInventoryUI();
                 buildVolumeInterface();
                 buildGraphicsInterface();
                 buildCameraInterface();
@@ -736,6 +821,18 @@
                         }
                         return;
                     }
+                    
+                    // Leaderboard Tab Toggle (PC only)
+                    if (e.key === 'Tab' && !checkPhone()) {
+                        e.preventDefault();
+                        toggleLeaderboard();
+                    }
+                    // Inventory Backtick Toggle (PC only)
+                    if (e.key === '`' && !checkPhone()) {
+                        e.preventDefault();
+                        toggleInventory();
+                    }
+
                     if(key in moveKeys) moveKeys[key] = true; 
                     if(e.code==='Space') moveKeys.space=true; 
                     if(e.key === 'Shift') {
@@ -777,7 +874,7 @@
                 document.addEventListener('touchstart', (e) => {
                     if (isMobile && currentInputMode === 'pc') {
                         const target = e.target;
-                        if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle') && !target.closest('#top-bar-menu') && !target.closest('#dropdown-menu') && !target.closest('#leaderboard')) {
+                        if (!target.closest('#pause-menu') && !target.closest('#roblox-menu-btn') && !target.closest('.confirmation-panel') && !target.closest('#shiftlock-toggle') && !target.closest('#top-bar-menu') && !target.closest('#dropdown-menu') && !target.closest('#leaderboard') && !target.closest('#inventory')) {
                             switchToMobileControls();
                             return; 
                         }
@@ -855,7 +952,7 @@
                 window.addEventListener('touchstart', (e) => {
                     if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning) return;
                     const target = e.target;
-                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock') || target.closest('#top-bar-menu') || target.closest('#dropdown-menu') || target.closest('#leaderboard')) return;
+                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#jump-button') || target.closest('#mobile-shiftlock') || target.closest('#top-bar-menu') || target.closest('#dropdown-menu') || target.closest('#leaderboard') || target.closest('#inventory')) return;
                     const touch = e.changedTouches[0];
                     const mouse = new THREE.Vector2((touch.clientX / window.innerWidth) * 2 - 1, -(touch.clientY / window.innerHeight) * 2 + 1);
                     const raycaster = new THREE.Raycaster();
@@ -870,7 +967,7 @@
                 window.addEventListener('mousedown', (e) => {
                     if (currentMovementMode !== 'tap' || isMenuOpen || isRagdoll || !isRunning || e.button !== 0) return;
                     const target = e.target;
-                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#top-bar-menu') || target.closest('#dropdown-menu') || target.closest('#leaderboard')) return;
+                    if (target.closest('#roblox-menu-btn') || target.closest('#pause-menu') || target.closest('#top-bar-menu') || target.closest('#dropdown-menu') || target.closest('#leaderboard') || target.closest('#inventory')) return;
                     const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
                     const raycaster = new THREE.Raycaster();
                     raycaster.setFromCamera(mouse, camera);
@@ -880,6 +977,19 @@
                         createTapMarker(tapTargetPos);
                     }
                 });
+
+                // Click outside to close Leaderboard on Phone
+                const closeLbOutside = (e) => {
+                    const lb = document.getElementById('leaderboard');
+                    const ddLb = document.getElementById('dd-leaderboard');
+                    if (checkPhone() && lb.classList.contains('active')) {
+                        if (!lb.contains(e.target) && !ddLb.contains(e.target)) {
+                            lb.classList.remove('active');
+                        }
+                    }
+                };
+                document.addEventListener('mousedown', closeLbOutside);
+                document.addEventListener('touchstart', closeLbOutside);
 
                 clock = new THREE.Clock();
                 loop();
@@ -1296,27 +1406,13 @@
             btn2.addEventListener('click', () => {
                 const isActive = btn2.classList.toggle('active');
                 if (isActive) {
-                    // If chat opens, close the 3-line menu
                     btn1.classList.remove('active');
                     dropdown.classList.remove('visible');
                 }
             });
 
             document.getElementById('dd-leaderboard').addEventListener('click', () => {
-                const lb = document.getElementById('leaderboard');
-                const isPhone = /iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent) || (isMobile && Math.min(window.innerWidth, window.innerHeight) < 600);
-                
-                lb.classList.remove('desktop', 'phone', 'active');
-                void lb.offsetWidth; // Trigger reflow
-                
-                if (isPhone) {
-                    lb.classList.add('phone');
-                } else {
-                    lb.classList.add('desktop');
-                }
-                lb.classList.add('active');
-                
-                // Close dropdown
+                toggleLeaderboard();
                 btn1.classList.remove('active');
                 dropdown.classList.remove('visible');
             });
@@ -1325,9 +1421,14 @@
                 document.getElementById('leaderboard').classList.remove('active');
             });
 
+            document.getElementById('dd-inventory').addEventListener('click', () => {
+                toggleInventory();
+                btn1.classList.remove('active');
+                dropdown.classList.remove('visible');
+            });
+
             document.getElementById('dd-respawn').addEventListener('click', () => {
                 triggerRespawnSequence();
-                // Close dropdown
                 btn1.classList.remove('active');
                 dropdown.classList.remove('visible');
             });
@@ -1358,6 +1459,48 @@
                     micGreenRect.setAttribute('y', 14);
                 }
             });
+        }
+
+        function toggleLeaderboard() {
+            const lb = document.getElementById('leaderboard');
+            const isPhone = checkPhone();
+            
+            lb.classList.remove('desktop', 'phone', 'active');
+            void lb.offsetWidth; 
+            
+            if (isPhone) {
+                lb.classList.add('phone');
+            } else {
+                lb.classList.add('desktop');
+            }
+            lb.classList.add('active');
+        }
+
+        function buildInventoryUI() {
+            const invContainer = document.getElementById('inventory');
+            const invSlots = document.getElementById('inv-slots');
+            const isPhone = checkPhone();
+            
+            invSlots.innerHTML = '';
+            invContainer.className = isPhone ? 'phone' : 'desktop';
+            
+            const slotCount = isPhone ? 3 : 10;
+            for (let i = 0; i < slotCount; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'inv-slot';
+                if (!isPhone) {
+                    const num = document.createElement('span');
+                    num.className = 'slot-num';
+                    num.innerText = i === 9 ? '0' : (i + 1).toString();
+                    slot.appendChild(num);
+                }
+                invSlots.appendChild(slot);
+            }
+        }
+
+        function toggleInventory() {
+            const inv = document.getElementById('inventory');
+            inv.classList.toggle('active');
         }
 
         function updateMicVisuals() {
