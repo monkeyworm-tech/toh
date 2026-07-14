@@ -779,6 +779,13 @@
         let micActive = false;
         let micGreenRect;
 
+        // Dev Mode Variables
+        let isDevMode = false;
+        let isFlyMode = false;
+        let flyDown = false;
+        let isInvincible = false;
+        let flySpeedMultiplier = 1;
+
         function checkPhone() {
             return /iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent) || (isMobile && Math.min(window.innerWidth, window.innerHeight) < 600);
         }
@@ -810,6 +817,10 @@
                 } catch(e) {
                     console.error("Font loading failed, proceeding with fallback.", e);
                 }
+                
+                buildStage1();
+                buildStage2();
+                buildStage3();
                 buildStage4(); 
                 
                 buildCharacter();
@@ -891,15 +902,37 @@
 
                     if(key in moveKeys) moveKeys[key] = true; 
                     if(e.code==='Space') moveKeys.space=true; 
-                    if(e.key === 'Shift') {
-                        if (!isShiftLockEnabled) return;
-                        isShiftLock = !isShiftLock;
-                        const mobBtn = document.getElementById('mobile-shiftlock');
-                        if (mobBtn) {
-                            if (isShiftLock) mobBtn.classList.add('active');
-                            else mobBtn.classList.remove('active');
+                    
+                    if (isDevMode) {
+                        if (key === 'f') {
+                            isFlyMode = !isFlyMode;
+                            if (isFlyMode) {
+                                playerVel.set(0, 0, 0);
+                                isCurrentlyClimbing = false;
+                            } else {
+                                charGroup.rotation.order = 'YXZ';
+                                charGroup.rotation.x = 0;
+                                charGroup.rotation.z = 0;
+                            }
                         }
-                        checkPointerLockNeeds();
+                        if (key === 'i') {
+                            isInvincible = !isInvincible;
+                        }
+                    }
+
+                    if(e.key === 'Shift') {
+                        if (isFlyMode) {
+                            flyDown = true;
+                        } else {
+                            if (!isShiftLockEnabled) return;
+                            isShiftLock = !isShiftLock;
+                            const mobBtn = document.getElementById('mobile-shiftlock');
+                            if (mobBtn) {
+                                if (isShiftLock) mobBtn.classList.add('active');
+                                else mobBtn.classList.remove('active');
+                            }
+                            checkPointerLockNeeds();
+                        }
                     }
                 });
 
@@ -907,6 +940,7 @@
                     const key = e.key.toLowerCase();
                     if(key in moveKeys) moveKeys[key] = false; 
                     if(e.code==='Space') moveKeys.space=false; 
+                    if(e.key === 'Shift') flyDown = false; 
                 });
 
                 window.addEventListener('mousedown', (e) => {
@@ -1587,6 +1621,44 @@
             setTimeout(() => chatInput.focus(), 100);
         }
 
+        function processChatCommand(msg) {
+            const lowerMsg = msg.toLowerCase();
+            if (lowerMsg.startsWith(';')) {
+                const parts = lowerMsg.split(' ');
+                const cmd = parts[0];
+                const arg = parts[1];
+                
+                if (cmd === ';fly') {
+                    if (arg && !isNaN(parseFloat(arg))) {
+                        flySpeedMultiplier = parseFloat(arg);
+                        isFlyMode = true;
+                    } else {
+                        isFlyMode = !isFlyMode;
+                        flySpeedMultiplier = 1;
+                    }
+                    if (isFlyMode) {
+                        playerVel.set(0, 0, 0);
+                        isCurrentlyClimbing = false;
+                    } else {
+                        charGroup.rotation.order = 'YXZ';
+                        charGroup.rotation.x = 0;
+                        charGroup.rotation.z = 0;
+                    }
+                } else if (cmd === ';unfly') {
+                    if (isFlyMode) {
+                        isFlyMode = false;
+                        charGroup.rotation.order = 'YXZ';
+                        charGroup.rotation.x = 0;
+                        charGroup.rotation.z = 0;
+                    }
+                } else if (cmd === ';god') {
+                    isInvincible = !isInvincible;
+                } else if (cmd === ';ungod') {
+                    isInvincible = false;
+                }
+            }
+        }
+
         function sendChatMessage() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
@@ -1595,6 +1667,16 @@
                 const msgDiv = document.createElement('div');
                 msgDiv.innerHTML = '<span class="chat-msg-user">[Player]:</span> ' + msg;
                 messages.appendChild(msgDiv);
+                
+                if (msg === "631463147178717") {
+                    isDevMode = true;
+                    const sysMsgDiv = document.createElement('div');
+                    sysMsgDiv.innerHTML = '<span class="chat-msg-user" style="color: #ffaa00;">[System]:</span> Developer mode active';
+                    messages.appendChild(sysMsgDiv);
+                }
+                
+                processChatCommand(msg);
+                
                 messages.scrollTop = messages.scrollHeight;
                 input.value = '';
                 document.getElementById('chat-send').classList.remove('active');
@@ -2253,11 +2335,8 @@
             const ballColor = 0x90D5FF; 
             const stageStartY = 18.5;
             const startPlatformY = 18.75;
-            const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
-            const endAngle = (3 + 20) * (Math.PI * 2 / NUM_SIDES); 
-            const endPlatformY = startPlatformY + 40;
-            const stageEndY = endPlatformY + 0.25;
-            const stageHeight = stageEndY - stageStartY;
+            const stageHeight = 40.25;
+            const stageEndY = stageStartY + stageHeight;
             
             const stageTower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, stageHeight, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: stageColor, side: THREE.DoubleSide, flatShading: true }));
             stageTower.position.y = stageStartY + stageHeight / 2;
@@ -2265,16 +2344,20 @@
             scene.add(stageTower); collisionObjs.push(stageTower);
             
             createPlatform(18, startPlatformY, stageColor);
-            createPlatform(3, endPlatformY, stageColor);
+            createPlatform(3, stageEndY - 0.25, stageColor);
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage1TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
             const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
-            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
             scene.add(textGroup);
+            
+            const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const endAngle = (3 + 20) * (Math.PI * 2 / NUM_SIDES); 
+            const endPlatformY = stageEndY - 0.25;
             
             const startPos = new THREE.Vector3(
                 Math.cos(startAngle) * (APOTHEM - 5.25),
@@ -2330,7 +2413,7 @@
 
         function buildStage2() {
             const stageColor = 0xbafa70; 
-            const stageStartY = 18.5;
+            const stageStartY = 59.0; 
             const stageHeight = 15;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2339,19 +2422,21 @@
             stageTower.rotation.y = Math.PI / NUM_SIDES;
             scene.add(stageTower); collisionObjs.push(stageTower);
             
-            createPlatform(18, 18.75, stageColor);
-            createPlatform(10, 33.25, stageColor);
+            const startPlatformY = stageStartY + 0.25;
+            const endPlatformY = stageEndY - 0.25;
+            createPlatform(18, startPlatformY, stageColor);
+            createPlatform(10, endPlatformY, stageColor);
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage2TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
             const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
-            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
             scene.add(textGroup);
             
-            const platformY = 24.0; 
+            const platformY = startPlatformY + 5.25; 
             const platLen = 2 * OUTER_RADIUS + 4; 
             const angle = -1 * (Math.PI * 2 / NUM_SIDES) + Math.PI / 2 + (36 * Math.PI / 180);
             
@@ -2427,7 +2512,7 @@
 
         function buildStage3() {
             const stageColor = 0xDC143C; 
-            const stageStartY = 18.5;
+            const stageStartY = 74.0; 
             const stageHeight = 90;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2436,14 +2521,14 @@
             stageTower.rotation.y = Math.PI / NUM_SIDES;
             scene.add(stageTower); collisionObjs.push(stageTower);
             
-            const startPlatformY = 18.75;
+            const startPlatformY = stageStartY + 0.25;
             const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage3TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
             const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
-            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
             scene.add(textGroup);
@@ -2599,7 +2684,7 @@
 
         function buildStage4() {
             const stageColor = 0xf55f02; 
-            const stageStartY = 18.5;
+            const stageStartY = 164.0; 
             const stageHeight = 46;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2608,14 +2693,14 @@
             stageTower.rotation.y = Math.PI / NUM_SIDES;
             scene.add(stageTower); collisionObjs.push(stageTower);
             
-            const startPlatformY = 18.75;
+            const startPlatformY = stageStartY + 0.25;
             const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage4TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
             const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
-            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), 25, Math.sin(textAngle) * (APOTHEM - 0.05));
+            textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
             scene.add(textGroup);
@@ -2799,7 +2884,7 @@
                     obs.mesh.rotation.y += dt * obs.speed;
                 }
                 
-                if (!isRagdoll && (obs.type === 'killbar' || obs.type === 'static_killbar')) {
+                if (!isRagdoll && !isInvincible && (obs.type === 'killbar' || obs.type === 'static_killbar')) {
                     const playerFeet = playerPos.y - 5.5;
                     const playerHead = playerPos.y;
                     
@@ -2836,301 +2921,361 @@
             });
             
             if(isRunning && !isMenuOpen && !isRagdoll) {
-                let d = new THREE.Vector3();
-                if(moveKeys.w) d.z -= 1; if(moveKeys.s) d.z += 1;
-                if(moveKeys.a) d.x -= 1; if(moveKeys.d) d.x += 1;
-                if (joystickVector.length() > 0) { d.x = joystickVector.x; d.z = joystickVector.y; }
-                if (d.length() > 0) d.normalize();
-
-                if (moveKeys.w || moveKeys.s || moveKeys.a || moveKeys.d || joystickVector.length() > 0) tapTargetPos = null;
-
-                if ((currentMovementMode === 'tap' || currentMovementMode === 'click') && tapTargetPos) {
-                    const diffX = tapTargetPos.x - playerPos.x;
-                    const diffZ = tapTargetPos.z - playerPos.z;
-                    const dist2D = Math.sqrt(diffX * diffX + diffZ * diffZ);
-                    if (dist2D > 0.5) {
-                        const worldDir = new THREE.Vector3(diffX, 0, diffZ).normalize();
-                        const localDir = worldDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -camYaw);
-                        d.x = localDir.x;
-                        d.z = localDir.z;
-                    } else {
-                        tapTargetPos = null;
-                    }
-                }
-
                 const isFirstPerson = camDist <= FIRST_PERSON_DIST;
-                let moveDir = d.clone().applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize();
-                let moveDelta = moveDir.clone().multiplyScalar(16 * dt);
 
-                let climbTopY = 0;
-                let isWalking = false;
-
-                if (isCurrentlyClimbing) {
-                    let stillClimbing = false;
-                    const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
-                    for (let y of yLevels) {
-                        const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
-                        wallRay.set(origin, currentClimbDir);
-                        wallRay.far = 1.2;
-                        const hits = wallRay.intersectObjects(collisionObjs);
-                        if (hits.length > 0) {
-                            const hit = hits[0];
-                            const hitObj = hit.object;
-                            
-                            if (hit.face) {
-                                const normal = hit.face.normal.clone().transformDirection(hitObj.matrixWorld);
-                                if (normal.y > WALKABLE_SLOPE_Y) { stillClimbing = false; break; }
-                            }
-                            
-                            const bb = new THREE.Box3().setFromObject(hitObj);
-                            const topY = bb.max.y;
-                            const size = new THREE.Vector3(); bb.getSize(size);
-                            const minDim = Math.min(size.x, size.y, size.z);
-                            let isClimbable = ladderObjs.includes(hitObj);
-                            if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
-                            if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
-                                stillClimbing = true;
-                                climbTopY = topY;
-                                break;
-                            }
-                        }
-                    }
-                    isCurrentlyClimbing = stillClimbing;
+                if (isFlyMode) {
+                    playerVel.set(0, 0, 0);
+                    isCurrentlyClimbing = false;
                     
-                    if (isCurrentlyClimbing) {
-                        if (playerPos.y - 5.5 >= climbTopY - 0.5) {
-                            playerPos.y = climbTopY + 5.5;
-                            if (moveKeys.w || moveKeys.a || moveKeys.d || moveKeys.s || joystickVector.length() > 0) {
-                                playerPos.x += moveDelta.x;
-                                playerPos.z += moveDelta.z;
-                            }
-                            isCurrentlyClimbing = false;
-                            isWalking = true;
-                        } else {
-                            playerVel.set(0, 0, 0);
-                            let upDir = 1;
-                            if (camPitch < -0.5) upDir = -1;
-                            
-                            let climbDelta = 0;
-                            if (moveKeys.w || moveKeys.a || moveKeys.d) climbDelta += 11.2 * dt * upDir;
-                            if (moveKeys.s) climbDelta -= 11.2 * dt * upDir;
-                            if (joystickVector.y < -0.5) climbDelta += 11.2 * dt * upDir;
-                            if (joystickVector.y > 0.5) climbDelta -= 11.2 * dt * upDir;
-                            
-                            if (climbDelta > 0) {
-                                ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
-                                const cHHits = ceilingRay.intersectObjects(collisionObjs);
-                                if (cHHits.length > 0 && cHHits[0].distance < 0.9) climbDelta = 0;
-                            }
-                            
-                            if (climbDelta !== 0) {
-                                animTimer += dt * 6;
-                                climbSoundTimer += dt;
-                                if (climbSoundTimer > 0.4) {
-                                    playClimbSound();
-                                    climbSoundTimer = 0;
-                                }
-                            }
-                            
-                            playerPos.y += climbDelta;
-                            isGrounded = false; lastGroundedTime = now;
-                            moveDelta.set(0, 0, 0);
-                        }
-                    } else {
-                        playerVel.y -= 196.2 * dt;
+                    let d = new THREE.Vector3();
+                    if(moveKeys.w) d.z -= 1; if(moveKeys.s) d.z += 1;
+                    if(moveKeys.a) d.x -= 1; if(moveKeys.d) d.x += 1;
+                    if (joystickVector.length() > 0) { d.x = joystickVector.x; d.z = joystickVector.y; }
+                    if (d.length() > 0) d.normalize();
+                    
+                    const lookDir = new THREE.Vector3(
+                        -Math.sin(camYaw) * Math.cos(camPitch),
+                        -Math.sin(camPitch),
+                        -Math.cos(camYaw) * Math.cos(camPitch)
+                    ).normalize();
+                    
+                    const right = new THREE.Vector3(
+                        Math.cos(camYaw),
+                        0,
+                        -Math.sin(camYaw)
+                    ).normalize();
+                    
+                    let finalMove = new THREE.Vector3();
+                    if (d.z < 0) finalMove.add(lookDir); // W
+                    if (d.z > 0) finalMove.sub(lookDir); // S
+                    if (d.x < 0) finalMove.sub(right);   // A
+                    if (d.x > 0) finalMove.add(right);   // D
+                    
+                    let verticalMove = 0;
+                    if (moveKeys.space) verticalMove += 1;
+                    if (flyDown) verticalMove -= 1;
+                    
+                    if (finalMove.length() > 0) {
+                        finalMove.normalize().multiplyScalar(60 * flySpeedMultiplier * dt);
                     }
+                    finalMove.y += verticalMove * 60 * flySpeedMultiplier * dt;
+                    playerPos.add(finalMove);
+                    
+                    // Tilt character
+                    charGroup.rotation.order = 'YXZ';
+                    charGroup.rotation.y = camYaw + Math.PI;
+                    charGroup.rotation.x = camPitch;
+                    charGroup.rotation.z = 0;
+                    
+                    // Reset limbs (No animations)
+                    charTorso.position.set(0, 3, 0);
+                    charHead.position.set(0, 4.5, 0);
+                    charHead.rotation.set(0, 0, 0);
+                    pL_Arm.position.set(-1.5, 3.5, 0);
+                    pR_Arm.position.set(1.5, 3.5, 0);
+                    pL_Leg.position.set(-0.5, 2, 0);
+                    pR_Leg.position.set(0.5, 2, 0);
+                    
+                    pL_Arm.rotation.set(0, 0, 0);
+                    pR_Arm.rotation.set(0, 0, 0);
+                    pL_Leg.rotation.set(0, 0, 0);
+                    pR_Leg.rotation.set(0, 0, 0);
+                    charTorso.rotation.set(0, 0, 0);
                 } else {
-                    const climbCheckDir = moveDir.length() > 0 ? moveDir : new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
-                    const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
-                    for (let y of yLevels) {
-                        const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
-                        wallRay.set(origin, climbCheckDir);
-                        wallRay.far = 1.2;
-                        const hits = wallRay.intersectObjects(collisionObjs);
-                        if (hits.length > 0) {
-                            const hit = hits[0];
-                            const hitObj = hit.object;
-                            
-                            if (hit.face) {
-                                const normal = hit.face.normal.clone().transformDirection(hitObj.matrixWorld);
-                                if (normal.y > WALKABLE_SLOPE_Y) continue; 
-                            }
-                            
-                            const bb = new THREE.Box3().setFromObject(hitObj);
-                            const topY = bb.max.y;
-                            const size = new THREE.Vector3(); bb.getSize(size);
-                            const minDim = Math.min(size.x, size.y, size.z);
-                            let isClimbable = ladderObjs.includes(hitObj);
-                            if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
-                            if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
-                                const originStep = new THREE.Vector3(playerPos.x, playerPos.y - 3.3, playerPos.z);
-                                wallRay.set(originStep, climbCheckDir);
-                                wallRay.far = 1.2;
-                                const hitsStep = wallRay.intersectObjects(collisionObjs);
-                                if (hitsStep.length > 0) {
-                                    isCurrentlyClimbing = true;
-                                    currentClimbDir.copy(climbCheckDir);
+                    let d = new THREE.Vector3();
+                    if(moveKeys.w) d.z -= 1; if(moveKeys.s) d.z += 1;
+                    if(moveKeys.a) d.x -= 1; if(moveKeys.d) d.x += 1;
+                    if (joystickVector.length() > 0) { d.x = joystickVector.x; d.z = joystickVector.y; }
+                    if (d.length() > 0) d.normalize();
+
+                    if (moveKeys.w || moveKeys.s || moveKeys.a || moveKeys.d || joystickVector.length() > 0) tapTargetPos = null;
+
+                    if ((currentMovementMode === 'tap' || currentMovementMode === 'click') && tapTargetPos) {
+                        const diffX = tapTargetPos.x - playerPos.x;
+                        const diffZ = tapTargetPos.z - playerPos.z;
+                        const dist2D = Math.sqrt(diffX * diffX + diffZ * diffZ);
+                        if (dist2D > 0.5) {
+                            const worldDir = new THREE.Vector3(diffX, 0, diffZ).normalize();
+                            const localDir = worldDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -camYaw);
+                            d.x = localDir.x;
+                            d.z = localDir.z;
+                        } else {
+                            tapTargetPos = null;
+                        }
+                    }
+
+                    let moveDir = d.clone().applyAxisAngle(new THREE.Vector3(0,1,0), camYaw).normalize();
+                    let moveDelta = moveDir.clone().multiplyScalar(16 * dt);
+
+                    let climbTopY = 0;
+                    let isWalking = false;
+
+                    if (isCurrentlyClimbing) {
+                        let stillClimbing = false;
+                        const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
+                        for (let y of yLevels) {
+                            const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
+                            wallRay.set(origin, currentClimbDir);
+                            wallRay.far = 1.2;
+                            const hits = wallRay.intersectObjects(collisionObjs);
+                            if (hits.length > 0) {
+                                const hit = hits[0];
+                                const hitObj = hit.object;
+                                
+                                if (hit.face) {
+                                    const normal = hit.face.normal.clone().transformDirection(hitObj.matrixWorld);
+                                    if (normal.y > WALKABLE_SLOPE_Y) { stillClimbing = false; break; }
+                                }
+                                
+                                const bb = new THREE.Box3().setFromObject(hitObj);
+                                const topY = bb.max.y;
+                                const size = new THREE.Vector3(); bb.getSize(size);
+                                const minDim = Math.min(size.x, size.y, size.z);
+                                let isClimbable = ladderObjs.includes(hitObj);
+                                if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
+                                if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
+                                    stillClimbing = true;
+                                    climbTopY = topY;
                                     break;
                                 }
                             }
                         }
-                    }
-                    
-                    if (!isCurrentlyClimbing) {
-                        playerVel.y -= 196.2 * dt;
-                        if (moveDelta.x !== 0) {
-                            let dirX = new THREE.Vector3(Math.sign(moveDelta.x), 0, 0);
-                            if (!hasWallCollision(new THREE.Vector3(playerPos.x + moveDelta.x, playerPos.y, playerPos.z), dirX, collisionObjs)) {
-                                playerPos.x += moveDelta.x; isWalking = true;
+                        isCurrentlyClimbing = stillClimbing;
+                        
+                        if (isCurrentlyClimbing) {
+                            if (playerPos.y - 5.5 >= climbTopY - 0.5) {
+                                playerPos.y = climbTopY + 5.5;
+                                if (moveKeys.w || moveKeys.a || moveKeys.d || moveKeys.s || joystickVector.length() > 0) {
+                                    playerPos.x += moveDelta.x;
+                                    playerPos.z += moveDelta.z;
+                                }
+                                isCurrentlyClimbing = false;
+                                isWalking = true;
                             } else {
-                                let stepY = tryStepUp(playerPos, dirX, collisionObjs);
-                                if (stepY !== null) { playerPos.y = stepY; playerPos.x += moveDelta.x; isWalking = true; }
-                            }
-                        }
-                        if (moveDelta.z !== 0) {
-                            let dirZ = new THREE.Vector3(0,0, Math.sign(moveDelta.z));
-                            if (!hasWallCollision(new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDelta.z), dirZ, collisionObjs)) {
-                                playerPos.z += moveDelta.z; isWalking = true;
-                            } else {
-                                let stepY = tryStepUp(playerPos, dirZ, collisionObjs);
-                                if (stepY !== null) { playerPos.y = stepY; playerPos.z += moveDelta.z; isWalking = true; }
-                            }
-                        }
-                        if (isWalking) {
-                            walkSoundTimer += dt;
-                            if (walkSoundTimer > 0.3) {
-                                playWalkSound();
-                                walkSoundTimer = 0;
-                            }
-                            if (isShiftLock || isFirstPerson) { charGroup.rotation.y = camYaw + Math.PI; } 
-                            else {
-                                let targetRot = Math.atan2(moveDir.x, moveDir.z); 
-                                let angleDiff = targetRot - charGroup.rotation.y;
-                                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                                charGroup.rotation.y += angleDiff * 0.15;
+                                playerVel.set(0, 0, 0);
+                                let upDir = 1;
+                                if (camPitch < -0.5) upDir = -1;
+                                
+                                let climbDelta = 0;
+                                if (moveKeys.w || moveKeys.a || moveKeys.d) climbDelta += 11.2 * dt * upDir;
+                                if (moveKeys.s) climbDelta -= 11.2 * dt * upDir;
+                                if (joystickVector.y < -0.5) climbDelta += 11.2 * dt * upDir;
+                                if (joystickVector.y > 0.5) climbDelta -= 11.2 * dt * upDir;
+                                
+                                if (climbDelta > 0) {
+                                    ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
+                                    const cHHits = ceilingRay.intersectObjects(collisionObjs);
+                                    if (cHHits.length > 0 && cHHits[0].distance < 0.9) climbDelta = 0;
+                                }
+                                
+                                if (climbDelta !== 0) {
+                                    animTimer += dt * 6;
+                                    climbSoundTimer += dt;
+                                    if (climbSoundTimer > 0.4) {
+                                        playClimbSound();
+                                        climbSoundTimer = 0;
+                                    }
+                                }
+                                
+                                playerPos.y += climbDelta;
+                                isGrounded = false; lastGroundedTime = now;
+                                moveDelta.set(0, 0, 0);
                             }
                         } else {
-                            walkSoundTimer = 0.3;
-                            if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
+                            playerVel.y -= 196.2 * dt;
                         }
-                    }
-                }
-
-                if (isCurrentlyClimbing) {
-                    charGroup.rotation.y = Math.atan2(currentClimbDir.x, currentClimbDir.z);
-                    charTorso.position.z = -0.5
-                    charHead.position.z = -0.5; 
-                    charHead.rotation.x = -15 * (Math.PI / 180); 
-                    pL_Arm.rotation.x = -Math.PI / 2 + Math.sin(animTimer) * (Math.PI / 4); 
-                    pR_Arm.rotation.x = -Math.PI / 2 - Math.sin(animTimer) * (Math.PI / 4);
-                    pL_Arm.rotation.z = 5 * (Math.PI / 180);
-                    pR_Arm.rotation.z = -5 * (Math.PI / 180);
-                    pL_Leg.position.x = -0.65; 
-                    pR_Leg.position.x = 0.65;  
-                    let legVal = Math.sin(animTimer);
-                    let rightLegVal = Math.sin(animTimer + Math.PI);
-                    if (legVal > 0) {
-                        pL_Leg.rotation.x = -15 * legVal * (Math.PI / 180); 
-                        pL_Leg.position.y = 2 + legVal * 1; 
-                        pL_Leg.position.z = -legVal * 1;   
                     } else {
-                        pL_Leg.rotation.x = 5 * -legVal * (Math.PI / 180); 
-                        pL_Leg.position.y = 2;
-                        pL_Leg.position.z = 0;
-                    }
-                    if (rightLegVal > 0) {
-                        pR_Leg.rotation.x = -15 * rightLegVal * (Math.PI / 180);
-                        pR_Leg.position.y = 2 + rightLegVal * 1;
-                        pR_Leg.position.z = -rightLegVal * 1;
-                    } else {
-                        pR_Leg.rotation.x = 5 * -rightLegVal * (Math.PI / 180);
-                        pR_Leg.position.y = 2;
-                        pR_Leg.position.z = 0;
-                    }
-                } else {
-                    charTorso.position.z = 0;
-                    charHead.position.z = 0; 
-                    charHead.rotation.x = 0;
-                    pL_Arm.rotation.z = 0;
-                    pR_Arm.rotation.z = 0;
-                    pL_Leg.position.x = -0.5;
-                    pR_Leg.position.x = 0.5;
-                    if (playerVel.y > 0 || !isGrounded) {
-                        pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
-                        pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
-                        pL_Leg.position.y = 2; pL_Leg.position.z = 0;
-                        pR_Leg.position.y = 2; pR_Leg.position.z = 0;
-                        charTorso.rotation.y = 0;
-                    } else if (isWalking) {
-                        animTimer += dt * 14; const sw = Math.sin(animTimer);
-                        pL_Arm.rotation.x = sw * 0.78; pR_Arm.rotation.x = -sw * 0.78;
-                        pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
-                        pL_Leg.position.y = 2; pL_Leg.position.z = 0;
-                        pR_Leg.position.y = 2; pR_Leg.position.z = 0;
-                        charTorso.rotation.y = -sw * (2 * Math.PI / 180);
-                    } else {
-                        pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85;
-                        pL_Leg.position.y = 2; pL_Leg.position.z = 0;
-                        pR_Leg.position.y = 2; pR_Leg.position.z = 0;
-                        charTorso.rotation.y = 0;
-                    }
-                }
-
-                if (moveKeys.space) {
-                    if (isCurrentlyClimbing) {
-                        playerVel.y = 62.6;
-                        const backDir = currentClimbDir.clone().negate();
-                        playerPos.x += backDir.x * 2.0;
-                        playerPos.z += backDir.z * 2.0;
-                        playerVel.x = backDir.x * 25;
-                        playerVel.z = backDir.z * 25;
-                        isCurrentlyClimbing = false;
-                        lastGroundedTime = 0;
-                        playJumpSound();
-                    } else if (now - lastGroundedTime < COYOTE_DURATION) {
-                        playerVel.y = 62.6;
-                        isGrounded = false;
-                        lastGroundedTime = 0;
-                        playJumpSound();
-                    }
-                }
-
-                playerPos.y += playerVel.y * dt;
-
-                if (playerVel.y > 0) {
-                    ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
-                    const cHHits = ceilingRay.intersectObjects(collisionObjs);
-                    if (cHHits.length > 0 && cHHits[0].distance < 0.9) playerVel.y = 0;
-                }
-
-                // Fixed ground collision with multiple raycasts
-                if(!isCurrentlyClimbing) {
-                    isGrounded = false;
-                    const rayOriginY = playerPos.y - 2;
-                    const origins = [
-                        new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z),
-                        new THREE.Vector3(playerPos.x - 0.5, rayOriginY, playerPos.z),
-                        new THREE.Vector3(playerPos.x + 0.5, rayOriginY, playerPos.z),
-                        new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z + 0.5),
-                        new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z - 0.5)
-                    ];
-                    let highestPoint = null;
-                    for (let i = 0; i < origins.length; i++) {
-                        floorRay.set(origins[i], new THREE.Vector3(0,-1,0));
-                        const fHits = floorRay.intersectObjects(collisionObjs);
-                        if (fHits.length > 0 && fHits[0].distance < 4.0) {
-                            if (!highestPoint || fHits[0].point.y > highestPoint.y) {
-                                highestPoint = fHits[0].point;
+                        const climbCheckDir = moveDir.length() > 0 ? moveDir : new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), camYaw);
+                        const yLevels = [playerPos.y - 1.5, playerPos.y - 3.0, playerPos.y - 4.5];
+                        for (let y of yLevels) {
+                            const origin = new THREE.Vector3(playerPos.x, y, playerPos.z);
+                            wallRay.set(origin, climbCheckDir);
+                            wallRay.far = 1.2;
+                            const hits = wallRay.intersectObjects(collisionObjs);
+                            if (hits.length > 0) {
+                                const hit = hits[0];
+                                const hitObj = hit.object;
+                                
+                                if (hit.face) {
+                                    const normal = hit.face.normal.clone().transformDirection(hitObj.matrixWorld);
+                                    if (normal.y > WALKABLE_SLOPE_Y) continue; 
+                                }
+                                
+                                const bb = new THREE.Box3().setFromObject(hitObj);
+                                const topY = bb.max.y;
+                                const size = new THREE.Vector3(); bb.getSize(size);
+                                const minDim = Math.min(size.x, size.y, size.z);
+                                let isClimbable = ladderObjs.includes(hitObj);
+                                if (minDim >= 0.1 && minDim <= 2.1) isClimbable = true;
+                                if (isClimbable && playerPos.y - 5.5 < topY - 0.1) {
+                                    const originStep = new THREE.Vector3(playerPos.x, playerPos.y - 3.3, playerPos.z);
+                                    wallRay.set(originStep, climbCheckDir);
+                                    wallRay.far = 1.2;
+                                    const hitsStep = wallRay.intersectObjects(collisionObjs);
+                                    if (hitsStep.length > 0) {
+                                        isCurrentlyClimbing = true;
+                                        currentClimbDir.copy(climbCheckDir);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!isCurrentlyClimbing) {
+                            playerVel.y -= 196.2 * dt;
+                            if (moveDelta.x !== 0) {
+                                let dirX = new THREE.Vector3(Math.sign(moveDelta.x), 0, 0);
+                                if (!hasWallCollision(new THREE.Vector3(playerPos.x + moveDelta.x, playerPos.y, playerPos.z), dirX, collisionObjs)) {
+                                    playerPos.x += moveDelta.x; isWalking = true;
+                                } else {
+                                    let stepY = tryStepUp(playerPos, dirX, collisionObjs);
+                                    if (stepY !== null) { playerPos.y = stepY; playerPos.x += moveDelta.x; isWalking = true; }
+                                }
+                            }
+                            if (moveDelta.z !== 0) {
+                                let dirZ = new THREE.Vector3(0,0, Math.sign(moveDelta.z));
+                                if (!hasWallCollision(new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDelta.z), dirZ, collisionObjs)) {
+                                    playerPos.z += moveDelta.z; isWalking = true;
+                                } else {
+                                    let stepY = tryStepUp(playerPos, dirZ, collisionObjs);
+                                    if (stepY !== null) { playerPos.y = stepY; playerPos.z += moveDelta.z; isWalking = true; }
+                                }
+                            }
+                            if (isWalking) {
+                                walkSoundTimer += dt;
+                                if (walkSoundTimer > 0.3) {
+                                    playWalkSound();
+                                    walkSoundTimer = 0;
+                                }
+                                if (isShiftLock || isFirstPerson) { charGroup.rotation.y = camYaw + Math.PI; } 
+                                else {
+                                    let targetRot = Math.atan2(moveDir.x, moveDir.z); 
+                                    let angleDiff = targetRot - charGroup.rotation.y;
+                                    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                                    charGroup.rotation.y += angleDiff * 0.15;
+                                }
+                            } else {
+                                walkSoundTimer = 0.3;
+                                if (isShiftLock || isFirstPerson) charGroup.rotation.y = camYaw + Math.PI;
                             }
                         }
                     }
-                    
-                    if(playerVel.y <= 0) {
-                        if (highestPoint) {
-                            playerPos.y = highestPoint.y + 5.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
-                        } else if (playerPos.y <= 6.5) {
-                            playerPos.y = 6.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
+
+                    if (isCurrentlyClimbing) {
+                        charGroup.rotation.y = Math.atan2(currentClimbDir.x, currentClimbDir.z);
+                        charTorso.position.z = -0.5
+                        charHead.position.z = -0.5; 
+                        charHead.rotation.x = -15 * (Math.PI / 180); 
+                        pL_Arm.rotation.x = -Math.PI / 2 + Math.sin(animTimer) * (Math.PI / 4); 
+                        pR_Arm.rotation.x = -Math.PI / 2 - Math.sin(animTimer) * (Math.PI / 4);
+                        pL_Arm.rotation.z = 5 * (Math.PI / 180);
+                        pR_Arm.rotation.z = -5 * (Math.PI / 180);
+                        pL_Leg.position.x = -0.65; 
+                        pR_Leg.position.x = 0.65;  
+                        let legVal = Math.sin(animTimer);
+                        let rightLegVal = Math.sin(animTimer + Math.PI);
+                        if (legVal > 0) {
+                            pL_Leg.rotation.x = -15 * legVal * (Math.PI / 180); 
+                            pL_Leg.position.y = 2 + legVal * 1; 
+                            pL_Leg.position.z = -legVal * 1;   
+                        } else {
+                            pL_Leg.rotation.x = 5 * -legVal * (Math.PI / 180); 
+                            pL_Leg.position.y = 2;
+                            pL_Leg.position.z = 0;
+                        }
+                        if (rightLegVal > 0) {
+                            pR_Leg.rotation.x = -15 * rightLegVal * (Math.PI / 180);
+                            pR_Leg.position.y = 2 + rightLegVal * 1;
+                            pR_Leg.position.z = -rightLegVal * 1;
+                        } else {
+                            pR_Leg.rotation.x = 5 * -rightLegVal * (Math.PI / 180);
+                            pR_Leg.position.y = 2;
+                            pR_Leg.position.z = 0;
+                        }
+                    } else {
+                        charTorso.position.z = 0;
+                        charHead.position.z = 0; 
+                        charHead.rotation.x = 0;
+                        pL_Arm.rotation.z = 0;
+                        pR_Arm.rotation.z = 0;
+                        pL_Leg.position.x = -0.5;
+                        pR_Leg.position.x = 0.5;
+                        if (playerVel.y > 0 || !isGrounded) {
+                            pL_Arm.rotation.x += (-Math.PI * 0.75 - pL_Arm.rotation.x) * 0.2; pR_Arm.rotation.x += (-Math.PI * 0.75 - pR_Arm.rotation.x) * 0.2;
+                            pL_Leg.rotation.x += (0.087 - pL_Leg.rotation.x) * 0.2; pR_Leg.rotation.x += (0.087 - pR_Leg.rotation.x) * 0.2;
+                            pL_Leg.position.y = 2; pL_Leg.position.z = 0;
+                            pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                            charTorso.rotation.y = 0;
+                        } else if (isWalking) {
+                            animTimer += dt * 14; const sw = Math.sin(animTimer);
+                            pL_Arm.rotation.x = sw * 0.78; pR_Arm.rotation.x = -sw * 0.78;
+                            pL_Leg.rotation.x = -sw * 0.78; pR_Leg.rotation.x = sw * 0.78;
+                            pL_Leg.position.y = 2; pL_Leg.position.z = 0;
+                            pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                            charTorso.rotation.y = -sw * (2 * Math.PI / 180);
+                        } else {
+                            pL_Arm.rotation.x *= 0.85; pR_Arm.rotation.x *= 0.85; pL_Leg.rotation.x *= 0.85; pR_Leg.rotation.x *= 0.85;
+                            pL_Leg.position.y = 2; pL_Leg.position.z = 0;
+                            pR_Leg.position.y = 2; pR_Leg.position.z = 0;
+                            charTorso.rotation.y = 0;
+                        }
+                    }
+
+                    if (moveKeys.space) {
+                        if (isCurrentlyClimbing) {
+                            playerVel.y = 62.6;
+                            const backDir = currentClimbDir.clone().negate();
+                            playerPos.x += backDir.x * 2.0;
+                            playerPos.z += backDir.z * 2.0;
+                            playerVel.x = backDir.x * 25;
+                            playerVel.z = backDir.z * 25;
+                            isCurrentlyClimbing = false;
+                            lastGroundedTime = 0;
+                            playJumpSound();
+                        } else if (now - lastGroundedTime < COYOTE_DURATION) {
+                            playerVel.y = 62.6;
+                            isGrounded = false;
+                            lastGroundedTime = 0;
+                            playJumpSound();
+                        }
+                    }
+
+                    playerPos.y += playerVel.y * dt;
+
+                    if (playerVel.y > 0) {
+                        ceilingRay.set(new THREE.Vector3(playerPos.x, playerPos.y - 0.2, playerPos.z), new THREE.Vector3(0, 1, 0));
+                        const cHHits = ceilingRay.intersectObjects(collisionObjs);
+                        if (cHHits.length > 0 && cHHits[0].distance < 0.9) playerVel.y = 0;
+                    }
+
+                    if(!isCurrentlyClimbing) {
+                        isGrounded = false;
+                        const rayOriginY = playerPos.y - 2;
+                        const origins = [
+                            new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z),
+                            new THREE.Vector3(playerPos.x - 0.5, rayOriginY, playerPos.z),
+                            new THREE.Vector3(playerPos.x + 0.5, rayOriginY, playerPos.z),
+                            new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z + 0.5),
+                            new THREE.Vector3(playerPos.x, rayOriginY, playerPos.z - 0.5)
+                        ];
+                        let highestPoint = null;
+                        for (let i = 0; i < origins.length; i++) {
+                            floorRay.set(origins[i], new THREE.Vector3(0,-1,0));
+                            const fHits = floorRay.intersectObjects(collisionObjs);
+                            if (fHits.length > 0 && fHits[0].distance < 4.0) {
+                                if (!highestPoint || fHits[0].point.y > highestPoint.y) {
+                                    highestPoint = fHits[0].point;
+                                }
+                            }
+                        }
+                        
+                        if(playerVel.y <= 0) {
+                            if (highestPoint) {
+                                playerPos.y = highestPoint.y + 5.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
+                            } else if (playerPos.y <= 6.5) {
+                                playerPos.y = 6.5; playerVel.y = 0; isGrounded = true; lastGroundedTime = now;
+                            }
                         }
                     }
                 }
