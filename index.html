@@ -156,7 +156,7 @@
             width: 200px; 
             background: rgb(0, 0, 0);
             border-radius: 12px;
-            z-index: 49;
+            z-index: 56; /* Increased to stay above chat */
             overflow: hidden;
             padding: 5px;
             box-sizing: border-box;
@@ -261,7 +261,7 @@
         }
         #chat-container.active { display: flex; }
         #chat-container.desktop { top: 80px; left: 20px; width: 600px; height: 300px; }
-        #chat-container.phone { bottom: 20px; left: 10px; width: 350px; height: 150px; }
+        #chat-container.phone { top: 80px; left: 10px; width: 350px; height: 150px; } /* Moved to top-left under menus */
         
         #chat-messages {
             flex: 1; overflow-y: auto; padding: 10px; font-size: 14px; line-height: 1.4;
@@ -712,7 +712,7 @@
         let lastGroundedTime = 0;
         const COYOTE_DURATION = 0.2; 
 
-        const NUM_SIDES = 20;
+        const NUM_SIDES = 16; // Reduced from 20 to 16 sides
         const WALL_FACET_LENGTH = 21; 
         const STEP_WIDTH = 11;        
         const STEP_DEPTH = 21;        
@@ -858,6 +858,8 @@
                 });
 
                 window.addEventListener('keydown', (e) => { 
+                    if (document.activeElement && document.activeElement.id === 'chat-input') return; // Prevent game controls while typing
+                    
                     if (isMobile && currentInputMode === 'mobile') {
                         switchToPCControls();
                         return; 
@@ -896,7 +898,7 @@
                     // Chat Slash Toggle (PC only)
                     if (e.key === '/' && !checkPhone() && document.activeElement.id !== 'chat-input') {
                         e.preventDefault();
-                        toggleChat(true);
+                        toggleChat(true, true); // forceFocus = true
                         return;
                     }
 
@@ -1514,7 +1516,7 @@
             });
 
             btn2.addEventListener('click', () => {
-                toggleChat();
+                toggleChat(null, false); // Do not auto-focus when clicking the chat icon
             });
 
             document.getElementById('dd-leaderboard').addEventListener('click', () => {
@@ -1582,7 +1584,11 @@
             chatInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    sendChatMessage();
+                    if (chatInput.value.trim() === '') {
+                        toggleChat(false); // Exit chat if empty
+                    } else {
+                        sendChatMessage();
+                    }
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     toggleChat(false);
@@ -1592,10 +1598,12 @@
             sendBtn.addEventListener('click', sendChatMessage);
         }
 
-        function toggleChat(forceState = null) {
+        function toggleChat(forceState = null, forceFocus = false) {
             const chat = document.getElementById('chat-container');
             const chatInput = document.getElementById('chat-input');
             const btn2 = document.getElementById('tb-btn-2');
+            const btn1 = document.getElementById('tb-btn-1');
+            const dropdown = document.getElementById('dropdown-menu');
             const isPhone = checkPhone();
             
             let willBeActive = forceState !== null ? forceState : !chat.classList.contains('active');
@@ -1605,6 +1613,12 @@
                 btn2.classList.remove('active');
                 chatInput.blur();
                 return;
+            }
+
+            // If chat is opening, close the dropdown menu if it's open
+            if (dropdown.classList.contains('visible')) {
+                dropdown.classList.remove('visible');
+                btn1.classList.remove('active');
             }
 
             chat.classList.remove('desktop', 'phone');
@@ -1618,12 +1632,17 @@
             }
             chat.classList.add('active');
             btn2.classList.add('active');
-            setTimeout(() => chatInput.focus(), 100);
+            
+            if (forceFocus) {
+                setTimeout(() => chatInput.focus(), 100);
+            }
         }
 
         function processChatCommand(msg) {
             const lowerMsg = msg.toLowerCase();
             if (lowerMsg.startsWith(';')) {
+                if (!isDevMode) return; // Block commands if dev mode is inactive
+                
                 const parts = lowerMsg.split(' ');
                 const cmd = parts[0];
                 const arg = parts[1];
@@ -2242,7 +2261,7 @@
         }
 
         function buildTower() {
-            const TOWER_HEIGHT = 18.5;
+            const TOWER_HEIGHT = 14.5; // Adjusted to match the top of the 15th step perfectly
             const tower = new THREE.Mesh(new THREE.CylinderGeometry(OUTER_RADIUS, OUTER_RADIUS, TOWER_HEIGHT, NUM_SIDES, 1, true), new THREE.MeshPhongMaterial({ color: THEME.gray, side: THREE.DoubleSide, flatShading: true }));
             tower.position.y = TOWER_HEIGHT / 2; tower.rotation.y = Math.PI / NUM_SIDES; 
             scene.add(tower); collisionObjs.push(tower);
@@ -2255,8 +2274,9 @@
             const holePath = new THREE.Path();
             for (let i = 0; i <= NUM_SIDES; i++) {
                 const angle = (i / NUM_SIDES) * Math.PI * 2;
-                circleX = Math.cos(angle) * HOLE_RADIUS; circleY = Math.sin(angle) * HOLE_RADIUS;
-                holePath[i === 0 ? 'moveTo' : 'lineTo'](circleX, circleY);
+                const cx = Math.cos(angle) * HOLE_RADIUS; 
+                const cy = Math.sin(angle) * HOLE_RADIUS;
+                holePath[i === 0 ? 'moveTo' : 'lineTo'](cx, cy);
             }
             floorShape.holes.push(holePath);
 
@@ -2291,15 +2311,15 @@
 
             const textSpriteMat = new THREE.MeshBasicMaterial({ map: createTextTexture("PRO TOWERS"), transparent: true });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), textSpriteMat); textPlane.position.set(0, 11.2, -APOTHEM + 0.51); gateGroup.add(textPlane);
-            gateGroup.rotation.y = (17 * (Math.PI * 2 / NUM_SIDES)); scene.add(gateGroup);
+            gateGroup.rotation.y = (14 * (Math.PI * 2 / NUM_SIDES)); scene.add(gateGroup); // Placed at the 15th step
 
-            for(let i=0; i<19; i++) {
-                const stepGroup = new THREE.Group(); const thickness = (i === 18) ? 0.5 : 1.0;
+            for(let i=0; i<15; i++) { // Changed to 15 stairs
+                const stepGroup = new THREE.Group(); const thickness = (i === 14) ? 0.5 : 1.0; // 15th step is 0.5 thick
                 const step = new THREE.Mesh(new THREE.BoxGeometry(STEP_WIDTH, thickness, STEP_DEPTH), new THREE.MeshPhongMaterial({ color: THEME.gray }));
                 const angle = i * (Math.PI * 2 / NUM_SIDES); const r = APOTHEM - (STEP_DEPTH / 4);
-                stepGroup.position.set(Math.cos(angle)*r, i * 1.0 + ((i === 18) ? 0.25 : 0.5), Math.sin(angle)*r);
+                stepGroup.position.set(Math.cos(angle)*r, i * 1.0 + ((i === 14) ? 0.25 : 0.5), Math.sin(angle)*r); // Height of top step is 14.5
                 stepGroup.rotation.y = -angle; stepGroup.add(step); scene.add(stepGroup); collisionObjs.push(step);
-                if (i === 18) {
+                if (i === 14) { // Ladder on the 15th step
                     const invWallGeo = new THREE.BoxGeometry(10.5, 18, 0.5);
                     const invWallMat = new THREE.MeshPhongMaterial({ transparent: true, opacity: 0 });
                     const invWall = new THREE.Mesh(invWallGeo, invWallMat);
@@ -2333,8 +2353,8 @@
         function buildStage1() {
             const stageColor = 0x90D5FF;
             const ballColor = 0x90D5FF; 
-            const stageStartY = 18.5;
-            const startPlatformY = 18.75;
+            const stageStartY = 14.5; // Shifted down to match new base tower height
+            const startPlatformY = 14.75;
             const stageHeight = 40.25;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2343,20 +2363,20 @@
             stageTower.rotation.y = Math.PI / NUM_SIDES;
             scene.add(stageTower); collisionObjs.push(stageTower);
             
-            createPlatform(18, startPlatformY, stageColor);
+            createPlatform(14, startPlatformY, stageColor); // Placed at the 15th step
             createPlatform(3, stageEndY - 0.25, stageColor);
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage1TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
-            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const textAngle = 14 * (Math.PI * 2 / NUM_SIDES); // Placed at the 15th step
             textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
             scene.add(textGroup);
             
-            const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
-            const endAngle = (3 + 20) * (Math.PI * 2 / NUM_SIDES); 
+            const startAngle = 14 * (Math.PI * 2 / NUM_SIDES);
+            const endAngle = (3 + 16) * (Math.PI * 2 / NUM_SIDES); // Adjusted for 16 sides
             const endPlatformY = stageEndY - 0.25;
             
             const startPos = new THREE.Vector3(
@@ -2413,7 +2433,7 @@
 
         function buildStage2() {
             const stageColor = 0xbafa70; 
-            const stageStartY = 59.0; 
+            const stageStartY = 55.0; // Shifted down to stack correctly
             const stageHeight = 15;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2424,13 +2444,13 @@
             
             const startPlatformY = stageStartY + 0.25;
             const endPlatformY = stageEndY - 0.25;
-            createPlatform(18, startPlatformY, stageColor);
+            createPlatform(14, startPlatformY, stageColor); // Placed at the 15th step
             createPlatform(10, endPlatformY, stageColor);
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage2TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
-            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const textAngle = 14 * (Math.PI * 2 / NUM_SIDES); // Placed at the 15th step
             textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
@@ -2512,7 +2532,7 @@
 
         function buildStage3() {
             const stageColor = 0xDC143C; 
-            const stageStartY = 74.0; 
+            const stageStartY = 70.0; // Shifted down to stack correctly
             const stageHeight = 90;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2522,12 +2542,12 @@
             scene.add(stageTower); collisionObjs.push(stageTower);
             
             const startPlatformY = stageStartY + 0.25;
-            const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
+            const startPlatGroup = createPlatform(14, startPlatformY, stageColor); // Placed at the 15th step
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage3TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
-            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const textAngle = 14 * (Math.PI * 2 / NUM_SIDES); // Placed at the 15th step
             textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
@@ -2546,7 +2566,7 @@
             const stairMat = new THREE.MeshPhongMaterial({ color: stageColor });
             const stairGeo = new THREE.BoxGeometry(12, 1, 7); 
             
-            const startAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const startAngle = 14 * (Math.PI * 2 / NUM_SIDES);
             const endAngle = 8 * (Math.PI * 2 / NUM_SIDES);
             const startX = Math.cos(startAngle) * (APOTHEM - STEP_DEPTH / 4);
             const startZ = Math.sin(startAngle) * (APOTHEM - STEP_DEPTH / 4);
@@ -2684,7 +2704,7 @@
 
         function buildStage4() {
             const stageColor = 0xf55f02; 
-            const stageStartY = 164.0; 
+            const stageStartY = 160.0; // Shifted down to stack correctly
             const stageHeight = 46;
             const stageEndY = stageStartY + stageHeight;
             
@@ -2694,12 +2714,12 @@
             scene.add(stageTower); collisionObjs.push(stageTower);
             
             const startPlatformY = stageStartY + 0.25;
-            const startPlatGroup = createPlatform(18, startPlatformY, stageColor);
+            const startPlatGroup = createPlatform(14, startPlatformY, stageColor); // Placed at the 15th step
             
             const textMat = new THREE.MeshBasicMaterial({ map: createStage4TextTexture(), transparent: true, side: THREE.DoubleSide });
             const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(15, 7.5), textMat);
             const textGroup = new THREE.Group();
-            const textAngle = 18 * (Math.PI * 2 / NUM_SIDES);
+            const textAngle = 14 * (Math.PI * 2 / NUM_SIDES); // Placed at the 15th step
             textGroup.position.set(Math.cos(textAngle) * (APOTHEM - 0.05), startPlatformY + 6.25, Math.sin(textAngle) * (APOTHEM - 0.05));
             textGroup.rotation.y = -textAngle - Math.PI / 2;
             textGroup.add(textPlane);
@@ -2946,8 +2966,8 @@
                     ).normalize();
                     
                     let finalMove = new THREE.Vector3();
-                    if (d.z < 0) finalMove.add(lookDir); // W
-                    if (d.z > 0) finalMove.sub(lookDir); // S
+                    if (d.z < 0) finalMove.add(lookDir); // W goes exactly in look direction
+                    if (d.z > 0) finalMove.sub(lookDir); // S goes exactly backwards
                     if (d.x < 0) finalMove.sub(right);   // A
                     if (d.x > 0) finalMove.add(right);   // D
                     
@@ -2961,10 +2981,10 @@
                     finalMove.y += verticalMove * 60 * flySpeedMultiplier * dt;
                     playerPos.add(finalMove);
                     
-                    // Tilt character
+                    // Tilt character exactly in look direction
                     charGroup.rotation.order = 'YXZ';
                     charGroup.rotation.y = camYaw + Math.PI;
-                    charGroup.rotation.x = camPitch;
+                    charGroup.rotation.x = camPitch; // Corrected tilt direction
                     charGroup.rotation.z = 0;
                     
                     // Reset limbs (No animations)
